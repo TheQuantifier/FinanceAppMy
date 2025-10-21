@@ -1,0 +1,158 @@
+/* ========== UPLOAD PAGE (unique styles only) ========== */
+
+.upload-hero {
+  margin-bottom: 1.25rem;
+}
+.upload-hero h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.35rem;
+}
+
+.uploader {
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.dropzone {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  margin-top: 0.5rem;
+}
+.dropzone:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dropzone.is-dragover {
+  border-color: var(--primary);
+  background: #f6fbff;
+}
+.dz-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.dz-icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.8;
+}
+.dz-text strong { display: block; }
+.dz-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tips {
+  margin: 0.9rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+.tips li { margin: 0.25rem 0; }
+
+.file-list-wrap { margin-top: 1rem; }
+.file-list-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+.file-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+.file-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  background: var(--card-bg);
+}
+.file-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--muted);
+  overflow: hidden;
+}
+.file-meta { min-width: 0; }
+.file-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-subtle {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.file-remove {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #b00020;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.status { margin-top: 0.6rem; }
+
+.recent { padding: 1.25rem; }
+
+.actions-col { width: 1%; white-space: nowrap; }
+
+/* Icon button: keep focus ring on the button (accessible), not on the image */
+.icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:hover { background: #f3f4f6; }
+/* Prefer focus-visible so mouse clicks don’t show a ring */
+.icon-btn:focus { outline: none; }
+.icon-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Trash icon image: no borders/outline */
+.icon-trash {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+/* Extra safety for any img placed inside the icon button */
+.icon-btn img {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}

@@ -1,0 +1,73 @@
+/* ========== ABOUT PAGE — page-specific only ========== */
+
+main {
+  max-width: 1100px;
+  margin: 1rem auto;
+  padding: 2rem 1.2rem 3rem;
+}
+
+.about-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.about-hero h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.about-hero .lead {
+  color: var(--muted);
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.about-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Uses global .card */
+
+.features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.features li {
+  padding: 0.4rem 0;
+  font-size: 1rem;
+}
+
+.team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.member {
+  flex: 1 1 220px;
+  text-align: center;
+}
+.member img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+}
+.member h3 {
+  margin: 0.3rem 0 0.1rem;
+}
+.member p {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 700px) {
+  .team {
+    flex-direction: column;
+    align-items: center;
+  }
+}

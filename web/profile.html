@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance App — Profile</title>
+
+  <!-- Meta -->
+  <meta name="description" content="Manage your account details, profile information, and security settings." />
+  <meta name="author" content="Finance App" />
+  <link rel="icon" type="image/png" href="images/favicon.png" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/default.css" />
+  <link rel="stylesheet" href="styles/profile.css" />
+</head>
+<body>
+  <!-- Header injected by default.js -->
+  <div id="header"></div>
+
+  <main>
+    <!-- ===== HERO (matches Records page structure) ===== -->
+    <section class="profile-hero">
+      <div class="title-wrap">
+        <h1>Profile</h1>
+        <p class="subtle">View and update your personal info, preferences, and security.</p>
+      </div>
+
+      <div class="actions" role="group" aria-label="Profile quick actions">
+        <button id="editProfileBtn" class="btn btn--primary" type="button">Edit Profile</button>
+      </div>
+    </section>
+
+    <!-- ===== CONTENT GRID ===== -->
+    <div class="profile-grid">
+      <!-- LEFT -->
+      <section class="card profile-card" aria-labelledby="profile-summary-title">
+        <h2 id="profile-summary-title" class="sr-only">Profile summary</h2>
+
+        <div class="avatar-block">
+          <div class="avatar" aria-hidden="true" title="Avatar"></div>
+          <div class="identity">
+            <h3 class="name" id="profileName">John Hand</h3>
+            <p class="subtle" id="profileTag">@thequantifier</p>
+          </div>
+        </div>
+
+        <dl class="meta">
+          <div><dt>Primary Email</dt><dd id="profileEmail">john@handfam.org</dd></div>
+          <div><dt>School Email</dt><dd id="profileSchoolEmail">jhand12@charlotte.edu</dd></div>
+          <div><dt>Phone</dt><dd id="profilePhone">(919) 576-6048</dd></div>
+          <div><dt>Location</dt><dd id="profileLocation">Charlotte, NC, USA</dd></div>
+          <div><dt>Member Since</dt><dd id="profileSince">Aug 2022</dd></div>
+        </dl>
+
+        <div class="actions">
+          <button class="btn" type="button" id="changeAvatarBtn">Change Avatar</button>
+          <button class="btn btn--link" type="button" id="copyProfileLinkBtn">Copy Profile Link</button>
+        </div>
+      </section>
+
+      <section class="card quick-stats" aria-labelledby="quick-stats-title">
+        <h2 id="quick-stats-title">Quick Stats</h2>
+        <ul class="stats-list">
+          <li><span class="stat-label">Last login</span><span class="stat-value" id="statLastLogin">Today, 4:12 PM</span></li>
+          <li><span class="stat-label">Two-factor</span><span class="stat-value" id="stat2FA">Enabled</span></li>
+          <li><span class="stat-label">Records uploaded</span><span class="stat-value" id="statUploads">127</span></li>
+        </ul>
+      </section>
+
+      <!-- RIGHT -->
+      <section class="card details" aria-labelledby="details-title">
+        <div class="section-head">
+          <h2 id="details-title">Details</h2>
+          <button class="btn" type="button" id="toggleEditBtn" aria-expanded="false" aria-controls="editForm">Toggle Edit</button>
+        </div>
+
+        <div class="details-view" id="detailsView" aria-live="polite">
+          <div class="row">
+            <div>
+              <p class="label">Full Name</p>
+              <p class="value" id="detailFullName">John Alexander Hand</p>
+            </div>
+            <div>
+              <p class="label">Preferred Name</p>
+              <p class="value" id="detailPreferred">Iohannes Manus</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <p class="label">Role</p>
+              <p class="value" id="detailRole">Director of Finance • UNC Charlotte</p>
+            </div>
+            <div>
+              <p class="label">Program</p>
+              <p class="value" id="detailProgram">B.S. Mathematics (Honors), Minor: Interactive Programming</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="label">Bio</p>
+            <p class="value" id="detailBio">Math, code, and building 3D games in Godot. Runs a finance-receipt OCR app and a few websites.</p>
+          </div>
+        </div>
+
+        <form id="editForm" class="edit-form" hidden>
+          <div class="form-grid">
+            <label><span class="label">Full Name</span><input type="text" id="inputFullName" value="John Alexander Hand" autocomplete="name" /></label>
+            <label><span class="label">Preferred Name</span><input type="text" id="inputPreferred" value="Iohannes Manus" /></label>
+            <label><span class="label">Primary Email</span><input type="email" id="inputEmail" value="john@handfam.org" autocomplete="email" /></label>
+            <label><span class="label">Phone</span><input type="tel" id="inputPhone" value="(919)576-6048" autocomplete="tel" /></label>
+            <label class="span-2"><span class="label">Bio</span><textarea id="inputBio" rows="4">Math, code, and building 3D games in Godot. Runs a finance-receipt OCR app and a few websites.</textarea></label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn" id="cancelEditBtn">Cancel</button>
+            <button type="submit" class="btn btn--primary">Save Changes</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card security" aria-labelledby="security-title">
+        <h2 id="security-title">Security</h2>
+
+        <div class="security-rows">
+          <div class="security-row">
+            <div class="sr-left">
+              <p class="label">Two-Factor Authentication</p>
+              <p class="subtle">Protect your account with a second step of verification.</p>
+            </div>
+            <div class="sr-right"><button class="btn" type="button" id="toggle2FABtn">Disable</button></div>
+          </div>
+
+          <div class="security-row">
+            <div class="sr-left">
+              <p class="label">Password</p>
+              <p class="subtle">Use a strong, unique password you don’t use elsewhere.</p>
+            </div>
+            <div class="sr-right"><button class="btn" type="button" id="changePasswordBtn">Change Password</button></div>
+          </div>
+
+          <div class="security-row">
+            <div class="sr-left">
+              <p class="label">Sessions</p>
+              <p class="subtle">Signed in on 3 devices.</p>
+            </div>
+            <div class="sr-right"><button class="btn" type="button" id="signOutAllBtn">Sign out all</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card activity" aria-labelledby="activity-title">
+        <h2 id="activity-title">Recent Activity</h2>
+        <div class="table-wrap">
+          <table class="txn-table" aria-describedby="activity-caption">
+            <caption id="activity-caption" class="sr-only">Recent account activity</caption>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Activity</th>
+                <th>IP</th>
+                <th class="num">Result</th>
+              </tr>
+            </thead>
+            <tbody id="activityBody">
+              <tr><td>Oct 20, 2025 4:12 PM</td><td>Login (Web)</td><td>172.16.21.5</td><td class="num">Success</td></tr>
+              <tr><td>Oct 19, 2025 8:03 PM</td><td>Changed default report range</td><td>—</td><td class="num">Saved</td></tr>
+              <tr><td>Oct 18, 2025 1:37 PM</td><td>Uploaded 4 receipts</td><td>—</td><td class="num">Processed</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer injected by default.js -->
+  <div id="footer"></div>
+
+  <!-- Scripts -->
+  <script src="scripts/default.js" defer></script>
+  <script src="scripts/profile.js" defer></script>
+</body>
+</html>

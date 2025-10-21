@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance App — Upload</title>
+
+  <link rel="icon" type="image/png" href="images/favicon.png" />
+  <link rel="stylesheet" href="styles/default.css" />
+  <link rel="stylesheet" href="styles/upload.css" />
+</head>
+<body>
+  <!-- Header injected by default.js -->
+  <div id="header"></div>
+
+  <main>
+    <section class="upload-hero">
+      <h1>Upload Receipts</h1>
+      <p class="subtle">Drop PDFs or images (PNG/JPG) to store the file locally and metadata in MongoDB.</p>
+    </section>
+
+    <section class="uploader card">
+      <label for="fileInput" class="file-label">Choose files</label>
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Upload dropzone">
+        <div class="dz-inner">
+          <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6M7 10l5-6 5 6M12 4v12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          <div class="dz-text">
+            <strong>Click to select</strong>
+            or drag & drop files here
+          </div>
+        </div>
+        <input id="fileInput" class="dz-input" type="file" accept=".pdf,.png,.jpg,.jpeg" />
+      </div>
+
+      <ul class="tips">
+        <li>Accepted: PDF, PNG, JPG (up to 50MB)</li>
+        <li>We store the file under <code>uploads/</code> and save metadata in your MongoDB <code>receipts</code> collection.</li>
+      </ul>
+
+      <div class="file-list-wrap">
+        <div class="file-list-title">Pending files</div>
+        <div id="fileList" class="file-list"></div>
+      </div>
+
+      <div class="actions">
+        <button id="clearBtn" class="btn" type="button">Clear</button>
+        <button id="uploadBtn" class="btn btn--primary" type="button" disabled>Upload</button>
+      </div>
+
+      <p id="statusMsg" class="status subtle" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="recent card">
+      <h2>Recent uploads</h2>
+      <div class="table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th scope="col">File name</th>
+              <th scope="col">Type</th>
+              <th scope="col" class="num">Size</th>
+              <th scope="col">Uploaded</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recentTableBody">
+            <tr><td colspan="6" class="subtle">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer injected by default.js -->
+  <div id="footer"></div>
+
+  <script src="scripts/default.js" defer></script>
+  <script>
+    // Optional: override API from querystring ?api=https://my.api
+    window.API_BASE = new URLSearchParams(location.search).get("api") || "http://localhost:4000";
+  </script>
+  <script src="scripts/upload.js" defer></script>
+</body>
+</html>

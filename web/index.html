@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Welcome | Finance App</title>
+
+  <!-- Meta -->
+  <meta name="description" content="Finance App helps you effortlessly scan receipts, organize expenses, and stay tax-ready year-round." />
+  <meta name="author" content="Finance App" />
+  <link rel="icon" type="image/png" href="images/favicon.png" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/default.css" />
+  <link rel="stylesheet" href="styles/index.css" />
+</head>
+<body class="landing-dark">
+  <!-- Header -->
+  <header class="nf-header" role="banner">
+    <div class="nf-header-inner">
+      <div class="nf-brand-center">
+        <span class="nf-logo">Finance App</span>
+      </div>
+      <nav class="nf-auth-right" aria-label="Authentication">
+        <a href="home.html" class="nf-login">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main>
+    <section class="nf-hero">
+      <div class="nf-hero-content">
+        <h1 class="nf-title">Take control of your finances.</h1>
+        <p class="nf-subtitle">
+          Scan receipts in seconds. Categorize automatically. Be tax-ready all year.
+        </p>
+
+        <!-- Create account box -->
+        <form class="nf-signup" action="register.html" method="get">
+          <input
+            type="email"
+            name="email"
+            class="nf-input"
+            placeholder="Email address"
+            aria-label="Email address"
+            required
+          />
+          <button type="submit" class="nf-btn">Get Started</button>
+        </form>
+        <small class="nf-hint">
+          Enter your email to create your account or restart your membership.
+        </small>
+      </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section class="nf-about">
+      <div class="nf-about-inner">
+        <h2>What is Finance App?</h2>
+        <p>
+          Finance App is your digital assistant for managing expenses and receipts with ease. Whether you’re a freelancer, small business owner, or
+          simply looking to better understand your spending habits, our platform simplifies financial organization from start to finish.
+        </p>
+
+        <div class="nf-about-grid">
+          <div class="nf-about-card">
+            <h3>📸 Smart Scanning</h3>
+            <p>Upload photos or PDFs and let our intelligent OCR automatically extract and categorize receipt data.</p>
+          </div>
+          <div class="nf-about-card">
+            <h3>📊 Instant Insights</h3>
+            <p>Get a clear view of your spending trends with interactive graphs and exportable summaries for tax season.</p>
+          </div>
+          <div class="nf-about-card">
+            <h3>💾 Easy Exports</h3>
+            <p>Download your reports to Excel, QuickBooks, or CSV in one click — ready for accountants or personal review.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="nf-footer" role="contentinfo">
+    <div class="nf-footer-inner">
+      <p>&copy; <span id="year"></span> Finance App. All rights reserved.</p>
+      <nav class="nf-legal" aria-label="Footer">
+        <a href="privacy.html">Privacy</a><span class="sep">•</span>
+        <a href="terms.html">Terms</a><span class="sep">•</span>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const y = document.getElementById('year');
+      if (y) y.textContent = new Date().getFullYear();
+    });
+  </script>
+</body>
+</html>

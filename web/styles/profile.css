@@ -1,0 +1,89 @@
+/* ===== HERO (mirror of Records hero) ===== */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.profile-hero .title-wrap h1 {
+  /* match Records page title sizing/weight */
+  font-size: 1.8rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+.profile-hero .actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* ===== GRID ===== */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.25rem;
+}
+
+/* ===== CARDS BASE PADDING ===== */
+.profile-card,
+.quick-stats,
+.details,
+.security,
+.activity { padding: 1.25rem; }
+
+/* ===== PROFILE SUMMARY ===== */
+.profile-card .actions { display: flex; gap: 0.6rem; margin-top: 0.75rem; }
+.avatar-block { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.9rem; }
+.avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(180deg, #dbeafe, #bfdbfe); border: 2px solid var(--border); }
+.identity .name { font-size: 1.15rem; font-weight: 700; }
+
+/* ===== META LIST ===== */
+.meta { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+.meta dt { font-size: 0.82rem; color: var(--muted); }
+.meta dd { font-weight: 600; }
+
+/* ===== QUICK STATS ===== */
+.quick-stats h2 { font-size: 1.1rem; margin-bottom: 0.6rem; }
+.stats-list { display: grid; gap: 0.6rem; list-style: none; }
+.stats-list .stat-label { color: var(--muted); font-size: 0.9rem; }
+.stats-list .stat-value { font-weight: 700; }
+
+/* ===== DETAILS ===== */
+.details .section-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.6rem; }
+.details .label { color: var(--muted); font-size: 0.9rem; }
+.details .value { font-weight: 600; }
+.details .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 1rem; margin-bottom: 0.8rem; }
+
+/* ===== EDIT FORM ===== */
+.edit-form { margin-top: 0.6rem; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 1rem; }
+.form-grid label { display: grid; gap: 0.35rem; }
+.form-grid .span-2 { grid-column: 1 / -1; }
+input[type="text"], input[type="email"], input[type="tel"], textarea {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+textarea { resize: vertical; }
+.form-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 0.9rem; }
+
+/* ===== SECURITY ===== */
+.security h2 { font-size: 1.1rem; margin-bottom: 0.6rem; }
+.security-rows { display: grid; gap: 0.6rem; }
+.security-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: #fff;
+}
+.sr-left .label { font-weight: 700; }
+
+/* ===== ACTIVITY ===== */
+.activity h2 { font-size: 1.1rem; margin-bottom: 0.6rem; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .profile-hero { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .details .row, .form-grid { grid-template-columns: 1fr; }
+}

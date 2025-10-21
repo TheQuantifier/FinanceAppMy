@@ -1,0 +1,106 @@
+{
+  "expenses": [
+    {
+      "id": "TXN-001",
+      "source": "Starbucks Coffee",
+      "category": "Food",
+      "amount": 8.75,
+      "date": "2025-10-03",
+      "payment_method": "Visa",
+      "notes": "Morning latte and croissant"
+    },
+    {
+      "id": "TXN-002",
+      "source": "Office Depot",
+      "category": "Office",
+      "amount": 54.90,
+      "date": "2025-10-05",
+      "payment_method": "MasterCard",
+      "notes": "Printer ink and notepads"
+    },
+    {
+      "id": "TXN-003",
+      "source": "Uber",
+      "category": "Travel",
+      "amount": 22.50,
+      "date": "2025-10-06",
+      "payment_method": "PayPal",
+      "notes": "Ride to client meeting"
+    },
+    {
+      "id": "TXN-004",
+      "source": "Duke Energy",
+      "category": "Utilities",
+      "amount": 42.30,
+      "date": "2025-10-07",
+      "payment_method": "Bank Transfer",
+      "notes": "Monthly electricity bill"
+    },
+    {
+      "id": "TXN-005",
+      "source": "Chipotle",
+      "category": "Food",
+      "amount": 15.80,
+      "date": "2025-10-09",
+      "payment_method": "Credit Card",
+      "notes": "Lunch burrito"
+    },
+    {
+      "id": "TXN-006",
+      "source": "Amazon",
+      "category": "Office",
+      "amount": 34.30,
+      "date": "2025-10-10",
+      "payment_method": "Credit Card",
+      "notes": "External hard drive case"
+    },
+    {
+      "id": "TXN-007",
+      "source": "Shell Gas Station",
+      "category": "Travel",
+      "amount": 36.40,
+      "date": "2025-10-12",
+      "payment_method": "Visa",
+      "notes": "Fuel refill"
+    },
+    {
+      "id": "TXN-008",
+      "source": "Target",
+      "category": "Other",
+      "amount": 33.40,
+      "date": "2025-10-13",
+      "payment_method": "Credit Card",
+      "notes": "Miscellaneous items"
+    }
+  ],
+
+  "income": [
+    {
+      "id": "INC-001",
+      "source": "Full-Time Job",
+      "category": "Salary",
+      "amount": 2000.00,
+      "date": "2025-10-01",
+      "payment_method": "Direct Deposit",
+      "notes": "Monthly paycheck"
+    },
+    {
+      "id": "INC-002",
+      "source": "Savings Account",
+      "category": "Interest",
+      "amount": 50.00,
+      "date": "2025-10-10",
+      "payment_method": "Bank Transfer",
+      "notes": "Interest from savings"
+    },
+    {
+      "id": "INC-003",
+      "source": "Freelance Project",
+      "category": "Freelance",
+      "amount": 100.00,
+      "date": "2025-10-13",
+      "payment_method": "PayPal",
+      "notes": "Web design project"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# Node
+node_modules/
+npm-debug.log
+.env
+tmp_uploads/
+uploads/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.zip
