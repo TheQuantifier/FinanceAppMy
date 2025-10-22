@@ -23,7 +23,9 @@
       <label for="fileInput" class="file-label">Choose files</label>
       <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Upload dropzone">
         <div class="dz-inner">
-          <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6M7 10l5-6 5 6M12 4v12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 13v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6M7 10l5-6 5 6M12 4v12" fill="none" stroke="currentColor" stroke-width="2"/>
+          </svg>
           <div class="dz-text">
             <strong>Click to select</strong>
             or drag & drop files here
@@ -50,8 +52,30 @@
       <p id="statusMsg" class="status subtle" role="status" aria-live="polite"></p>
     </section>
 
+    <!-- Recent uploads (last 3, no actions) -->
     <section class="recent card">
       <h2>Recent uploads</h2>
+      <div class="table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th scope="col">File name</th>
+              <th scope="col">Type</th>
+              <th scope="col" class="num">Size</th>
+              <th scope="col">Uploaded</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="recentTableBody">
+            <tr><td colspan="5" class="subtle">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- All uploads (with actions) -->
+    <section class="recent card">
+      <h2>All uploads</h2>
       <div class="table-wrap">
         <table class="txn-table">
           <thead>
@@ -64,7 +88,7 @@
               <th scope="col" class="actions-col">Actions</th>
             </tr>
           </thead>
-          <tbody id="recentTableBody">
+          <tbody id="allTableBody">
             <tr><td colspan="6" class="subtle">Loading…</td></tr>
           </tbody>
         </table>
