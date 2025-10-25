@@ -1,0 +1,6 @@
+# worker/requirements.txt
+pytesseract
+pillow
+PyMuPDF
+# If you ever parse PDFs with pdfplumber later:
+# pdfplumber
