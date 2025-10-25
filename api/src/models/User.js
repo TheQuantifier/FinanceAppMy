@@ -14,9 +14,6 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Helpful indexes
-UserSchema.index({ email: 1 });
-
 // Clean JSON output (remove sensitive fields)
 UserSchema.set("toJSON", {
   virtuals: true,
