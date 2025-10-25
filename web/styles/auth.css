@@ -1,0 +1,391 @@
+/* =========================================================
+   Finance App - Auth + Landing Styles
+   Combines Register, Login, and Landing Page Design
+   ========================================================= */
+
+/* ========== BASE LAYOUT ========== */
+html, body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .landing-light {
+    background: #fff;
+    color: #111;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow-x: hidden;
+  }
+  
+  /* =========================================================
+     HEADER (fixed at top)
+     ========================================================= */
+  .nf-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .nf-header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .nf-logo {
+    font-weight: 900;
+    font-size: 1.8rem;
+    color: var(--primary);
+    letter-spacing: 0.5px;
+  }
+  
+  .nf-login {
+    color: #000;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .nf-login:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+  
+  /* =========================================================
+     HERO SECTION
+     ========================================================= */
+  .nf-hero {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 1rem 6rem; /* for header + footer spacing */
+    background: #fff;
+  }
+  
+  .nf-hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .nf-title {
+    font-size: clamp(2.4rem, 6vw, 3.2rem);
+    font-weight: 900;
+    color: #000;
+    margin-bottom: 0.5rem;
+  }
+  
+  .nf-subtitle {
+    font-size: 1.15rem;
+    color: #444;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+  }
+  
+  /* =========================================================
+     SIGNUP FORM (Landing/Register)
+     ========================================================= */
+  .nf-signup {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.4rem;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  
+  .nf-input {
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #f7f7f7;
+    color: #000;
+    outline: none;
+    font-size: 1rem;
+  }
+  .nf-input::placeholder {
+    color: #888;
+  }
+  .nf-input:focus {
+    border-color: var(--primary);
+    background: #fff;
+  }
+  
+  .nf-btn {
+    padding: 0.85rem 1.3rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .nf-btn:hover {
+    background: var(--accent);
+  }
+  
+  .nf-hint {
+    display: block;
+    margin-top: 0.6rem;
+    color: #666;
+    font-size: 0.88rem;
+  }
+  
+  /* =========================================================
+     ABOUT SECTION
+     ========================================================= */
+  .nf-about {
+    background: #fafafa;
+    border-top: 1px solid #eee;
+    padding: 3rem 1rem 4rem;
+    text-align: center;
+  }
+  
+  .nf-about-inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .nf-about h2 {
+    color: var(--primary);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .nf-about p {
+    color: #444;
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  
+  /* Feature Cards */
+  .nf-about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .nf-about-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .nf-about-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+  
+  .nf-about-card h3 {
+    color: var(--primary);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .nf-about-card p {
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
+  }
+  
+  /* =========================================================
+     FOOTER (fixed at bottom)
+     ========================================================= */
+  .nf-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #555;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding: 0.8rem 1rem;
+    box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+    z-index: 999;
+  }
+  
+  .nf-footer-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  
+  .nf-footer-inner p {
+    margin: 0;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  
+  .nf-legal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+  }
+  
+  .nf-legal a {
+    color: #555;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .nf-legal a:hover {
+    color: var(--accent);
+  }
+  
+  .nf-legal .sep {
+    color: #aaa;
+    margin: 0 0.3rem;
+  }
+  
+  /* =========================================================
+     AUTH PAGES (Login + Register Forms)
+     ========================================================= */
+  .auth-container {
+    max-width: 420px;
+    margin: 6rem auto 4rem;
+    background: var(--card-bg);
+    padding: 2rem 2.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  
+  .auth-container h1 {
+    font-size: 1.8rem;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+  }
+  
+  .auth-container p.subtext {
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  /* FORM */
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .auth-form label {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  
+  .auth-form input {
+    padding: 0.7rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .auth-form input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,163,224,0.15);
+    outline: none;
+  }
+  
+  /* BUTTON */
+  .auth-form button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .auth-form button:hover {
+    background: var(--accent);
+  }
+  
+  /* LINKS */
+  .auth-links {
+    margin-top: 1.25rem;
+    font-size: 0.95rem;
+  }
+  
+  .auth-links a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .auth-links a:hover {
+    text-decoration: underline;
+  }
+  
+  /* =========================================================
+     RESPONSIVE ADJUSTMENTS
+     ========================================================= */
+  @media (max-width: 640px) {
+    .nf-header-inner {
+      flex-direction: row;
+      padding: 0.75rem 1rem;
+    }
+  
+    .nf-logo {
+      font-size: 1.5rem;
+    }
+  
+    .nf-signup {
+      grid-template-columns: 1fr;
+    }
+  
+    .nf-btn {
+      width: 100%;
+    }
+  
+    .nf-hero {
+      padding: 5rem 1rem 3rem;
+    }
+  
+    .nf-about {
+      padding: 2rem 1rem 3rem;
+    }
+  
+    .nf-about h2 {
+      font-size: 1.7rem;
+    }
+  
+    .auth-container {
+      margin: 2rem 1rem;
+      padding: 1.5rem;
+    }
+  }
+  

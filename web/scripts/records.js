@@ -1,423 +1,249 @@
-// frontend/records.js
-// ========== RECORDS PAGE LOGIC (Expenses + Income; header/footer handled by default.js) ==========
-(() => {
-  // Use the receipts endpoint (returns an array of Receipt documents)
-  const DATA_URL = "http://localhost:4000/receipts";
-  // POST new manual transactions to the records router (mounted at /records)
-  const POST_URL = "http://localhost:4000/records";
-  const CURRENCY_FALLBACK = "USD";
+// scripts/records.js
+// Handles fetching records, displaying them in tables, filtering,
+// and managing Add Expense / Add Income modals.
 
-  const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+document.addEventListener("DOMContentLoaded", () => {
+  const API_BASE = "http://localhost:4000/api";
 
-  const fmtMoney = (value, currency) =>
-    new Intl.NumberFormat(undefined, { style: "currency", currency: currency || CURRENCY_FALLBACK }).format(value ?? 0);
+  // =================== Elements ===================
+  const expenseTbody = document.getElementById("recordsTbody");
+  const incomeTbody = document.getElementById("recordsTbodyIncome");
 
-  const fmtDate = (isoOrStr) => {
-    if (!isoOrStr) return "";
-    // Try to parse common formats (YYYY-MM-DD or MM/DD/YYYY). If it's already ISO, Date will handle it.
+  const filtersForm = document.getElementById("filtersForm");
+  const filtersFormIncome = document.getElementById("filtersFormIncome");
+
+  const expensePageInfo = document.getElementById("pageInfo");
+  const incomePageInfo = document.getElementById("pageInfoIncome");
+
+  // Add modals
+  const addExpenseModal = document.getElementById("addExpenseModal");
+  const addIncomeModal = document.getElementById("addIncomeModal");
+  const expenseForm = document.getElementById("expenseForm");
+  const incomeForm = document.getElementById("incomeForm");
+
+  // Buttons
+  const btnAddExpense = document.getElementById("btnAddExpense");
+  const btnAddIncome = document.getElementById("btnAddIncome");
+  const cancelExpenseBtn = document.getElementById("cancelExpenseBtn");
+  const cancelIncomeBtn = document.getElementById("cancelIncomeBtn");
+
+  // =================== Helpers ===================
+  function showModal(modal) {
+    modal.classList.remove("hidden");
+  }
+
+  function hideModal(modal) {
+    modal.classList.add("hidden");
+  }
+
+  function createRow(record) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${record.date || "—"}</td>
+      <td>${record.source || "—"}</td>
+      <td>${record.category || "—"}</td>
+      <td class="num">${record.amount != null ? record.amount.toFixed(2) : "0.00"}</td>
+      <td>${record.method || "—"}</td>
+      <td>${record.notes || ""}</td>
+    `;
+    return tr;
+  }
+
+  // =================== Load Data ===================
+  async function loadRecords() {
     try {
-      // Normalize: accept "MM/DD/YYYY" and "YYYY-MM-DD"
-      const d = parseDate(isoOrStr);
-      if (!d || Number.isNaN(d.getTime())) return String(isoOrStr);
-      return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
-    } catch {
-      return String(isoOrStr);
-    }
-  };
+      expenseTbody.innerHTML = `<tr><td colspan="6" class="subtle">Loading expenses…</td></tr>`;
+      incomeTbody.innerHTML = `<tr><td colspan="6" class="subtle">Loading income…</td></tr>`;
 
-  // ---- Data
-  let EXP_RAW = [];
-  let INC_RAW = [];
-  let summaryCurrency = CURRENCY_FALLBACK;
+      const [recordsRes, receiptsRes] = await Promise.all([
+        fetch(`${API_BASE}/records`),
+        fetch(`${API_BASE}/receipts`)
+      ]);
 
-  // Robust date parser: accept YYYY-MM-DD and MM/DD/YYYY
-  function parseDate(s) {
-    if (!s) return null;
-    if (s instanceof Date) return s;
-    const trimmed = String(s).trim();
-    // YYYY-MM-DD
-    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) return new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T00:00:00`);
-    // MM/DD/YYYY or M/D/YYYY
-    const mdMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (mdMatch) {
-      const mm = mdMatch[1].padStart(2, "0");
-      const dd = mdMatch[2].padStart(2, "0");
-      const yyyy = mdMatch[3];
-      return new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
-    }
-    // fallback - let Date try (may be locale dependent)
-    const d = new Date(trimmed);
-    return isNaN(d) ? null : d;
-  }
+      if (!recordsRes.ok || !receiptsRes.ok)
+        throw new Error("Failed to fetch data from backend");
 
-  // ----------------- LOAD DATA -----------------
-  async function loadData() {
-    const resp = await fetch(DATA_URL, { cache: "no-store" });
-    if (!resp.ok) throw new Error(`Failed to load data (${resp.status})`);
-    const json = await resp.json();
-    
-    console.log("Fetched JSON", json);
-    // The backend returns a flat array, so split manually if needed
-    EXP_RAW = json.filter(r => r.type === "expense");
-    INC_RAW = json.filter(r => r.type === "income");
-  
-    // If no type field exists, assume all are expenses
-    if (!EXP_RAW.length && !INC_RAW.length) {
-      EXP_RAW = json;
-    }
-  
-    summaryCurrency = json[0]?.currency || CURRENCY_FALLBACK;
-  
-    // Pass json here
-    hydrateCategoryFilters(json);
-  }
+      const records = await recordsRes.json();
+      const receipts = await receiptsRes.json();
 
-  function hydrateCategoryFilters() {
-    const expSel = $("#category");
-    if (expSel) {
-      // Clear existing options
-      expSel.innerHTML = `<option value="">All</option>`;
-      const expCats = Array.from(new Set(EXP_RAW.map(t => (t.category || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-      for (const name of expCats) {
-        const opt = document.createElement("option");
-        opt.value = name; opt.textContent = name;
-        expSel.appendChild(opt);
-      }
-    }
+      const all = [];
 
-    const incSel = $("#categoryIncome");
-    if (incSel) {
-      incSel.innerHTML = `<option value="">All</option>`;
-      const incCats = Array.from(new Set(INC_RAW.map(t => (t.category || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-      for (const name of incCats) {
-        const opt = document.createElement("option");
-        opt.value = name; opt.textContent = name;
-        incSel.appendChild(opt);
-      }
-    }
-  }
-
-  // ----------------- CONTROLLER FACTORY -----------------
-  function makeController(cfg) {
-    const els = {
-      q: $(`#${cfg.prefix === "exp" ? "q" : "qIncome"}`),
-      category: $(`#${cfg.prefix === "exp" ? "category" : "categoryIncome"}`),
-      method: $(`#${cfg.prefix === "exp" ? "method" : "methodIncome"}`),
-      minDate: $(`#${cfg.prefix === "exp" ? "minDate" : "minDateIncome"}`),
-      maxDate: $(`#${cfg.prefix === "exp" ? "maxDate" : "maxDateIncome"}`),
-      minAmt: $(`#${cfg.prefix === "exp" ? "minAmt" : "minAmtIncome"}`),
-      maxAmt: $(`#${cfg.prefix === "exp" ? "maxAmt" : "maxAmtIncome"}`),
-      sort: $(`#${cfg.prefix === "exp" ? "sort" : "sortIncome"}`),
-      pageSize: $(`#${cfg.prefix === "exp" ? "pageSize" : "pageSizeIncome"}`),
-      form: $(`#${cfg.prefix === "exp" ? "filtersForm" : "filtersFormIncome"}`),
-      btnClear: $(`#${cfg.prefix === "exp" ? "btnClear" : "btnClearIncome"}`),
-      tbody: $(`#${cfg.prefix === "exp" ? "recordsTbody" : "recordsTbodyIncome"}`),
-      prevPage: $(`#${cfg.prefix === "exp" ? "prevPage" : "prevPageIncome"}`),
-      nextPage: $(`#${cfg.prefix === "exp" ? "nextPage" : "nextPageIncome"}`),
-      pageInfo: $(`#${cfg.prefix === "exp" ? "pageInfo" : "pageInfoIncome"}`),
-      btnExport: $(`#${cfg.prefix === "exp" ? "btnExportExpenses" : "btnExportIncome"}`),
-    };
-
-    const state = {
-      q: "", category: "", method: "",
-      minDate: "", maxDate: "",
-      minAmt: "", maxAmt: "",
-      sort: "date_desc",
-      page: 1,
-      pageSize: 25,
-    };
-
-    function matchesText(txn, q) {
-      if (!q) return true;
-      const t = q.toLowerCase();
-      return cfg.textFields.some(f => (String(txn[f] || "").toLowerCase().includes(t)));
-    }
-
-    function withinDate(txn, minDate, maxDate) {
-      if (!minDate && !maxDate) return true;
-      const d = parseDate(txn.date);
-      if (!d) return false;
-      if (minDate) {
-        const md = parseDate(minDate);
-        if (md && d < md) return false;
-      }
-      if (maxDate) {
-        const xd = parseDate(maxDate);
-        if (xd && d > xd) return false;
-      }
-      return true;
-    }
-
-    function withinAmount(txn, minAmt, maxAmt) {
-      const a = Number(txn.amount) || 0;
-      if (minAmt !== "" && minAmt != null && !Number.isNaN(Number(minAmt)) && a < Number(minAmt)) return false;
-      if (maxAmt !== "" && maxAmt != null && !Number.isNaN(Number(maxAmt)) && a > Number(maxAmt)) return false;
-      return true;
-    }
-
-    function applyFilters() {
-      let list = cfg.rows().slice();
-      list = list.filter(txn =>
-        matchesText(txn, state.q) &&
-        (!state.category || (txn.category || "") === state.category) &&
-        (
-          !state.method ||
-          (
-            state.method.toLowerCase() === "other"
-              ? !["cash", "credit card", "debit card", "direct deposit", "ach", "check", "paypal"].includes(((txn.method || "")).toLowerCase())
-              : (txn.method || "").toLowerCase() === state.method.toLowerCase()
-          )
-        ) &&
-        withinDate(txn, state.minDate, state.maxDate) &&
-        withinAmount(txn, state.minAmt, state.maxAmt)
-      );
-
-      list.sort((a, b) => {
-        switch (state.sort) {
-          case "date_asc": return (a.date || "").localeCompare(b.date || "");
-          case "date_desc": return (b.date || "").localeCompare(a.date || "");
-          case "amount_asc": return (Number(a.amount) || 0) - (Number(b.amount) || 0);
-          case "amount_desc": return (Number(b.amount) || 0) - (Number(a.amount) || 0);
-          case "source_asc": return (a[cfg.sortKeys.alpha] || "").localeCompare(b[cfg.sortKeys.alpha] || "");
-          case "source_desc": return (b[cfg.sortKeys.alpha] || "").localeCompare(a[cfg.sortKeys.alpha] || "");
-          default: return 0;
-        }
-      });
-      return list;
-    }
-
-    function paginate(list) {
-      const size = Number(state.pageSize) || 25;
-      const pages = Math.max(1, Math.ceil(list.length / size));
-      const page = Math.min(Math.max(1, state.page), pages);
-      const start = (page - 1) * size;
-      return { slice: list.slice(start, start + size), page, pages, total: list.length };
-    }
-
-    function renderTable(rows) {
-      const tb = els.tbody;
-      if (!tb) return;
-      tb.innerHTML = "";
-      if (!rows.length) {
-        tb.innerHTML = `<tr><td colspan="6" class="subtle">No results.</td></tr>`;
-        return;
-      }
-      for (const txn of rows) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = cfg.columns(txn);
-        tb.appendChild(tr);
-      }
-    }
-
-    function renderPager(info) {
-      if (els.pageInfo) els.pageInfo.textContent =
-        `Page ${info.page} of ${info.pages} — ${info.total} result${info.total === 1 ? "" : "s"}`;
-      if (els.prevPage) els.prevPage.disabled = info.page <= 1;
-      if (els.nextPage) els.nextPage.disabled = info.page >= info.pages;
-    }
-
-    function updateView() {
-      const filtered = applyFilters();
-      const info = paginate(filtered);
-      renderTable(info.slice);
-      renderPager(info);
-    }
-
-    function readForm() {
-      state.q = els.q?.value.trim() || "";
-      state.category = els.category?.value || "";
-      state.method = els.method?.value || "";
-      state.minDate = els.minDate?.value || "";
-      state.maxDate = els.maxDate?.value || "";
-      state.minAmt = els.minAmt?.value || "";
-      state.maxAmt = els.maxAmt?.value || "";
-      state.sort = els.sort?.value || "date_desc";
-      state.pageSize = Number(els.pageSize?.value) || 25;
-      state.page = 1;
-    }
-
-    function exportCSV() {
-      const filtered = applyFilters();
-      const header = ["Date", "Source", "Category", "Amount", "Method", "Notes"];
-      const lines = [header.join(",")];
-      for (const t of filtered) {
-        const row = [
-          t.date || "",
-          (t[cfg.sortKeys.alpha] || "").replace(/"/g, '""'),
-          (t.category || "").replace(/"/g, '""'),
-          (Number(t.amount) ?? 0).toFixed(2),
-          (t.method || "").replace(/"/g, '""'),
-          (t.notes || "").replace(/"/g, '""'),
-        ].map(v => /[",\n]/.test(v) ? `"${v}"` : String(v));
-        lines.push(row.join(","));
-      }
-      const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement("a"), {
-        href: url,
-        download: `${cfg.prefix === "exp" ? "expenses" : "income"}-${new Date().toISOString().slice(0,10)}.csv`,
-      });
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function wire() {
-      els.form?.addEventListener("submit", (e) => { e.preventDefault(); readForm(); updateView(); });
-      els.btnClear?.addEventListener("click", () => {
-        $$("#" + els.form.id + " input, #" + els.form.id + " select").forEach(el => {
-          if (el === els.pageSize) return;
-          if (el.tagName === "SELECT") el.selectedIndex = 0;
-          else el.value = "";
+      for (const r of records) {
+        all.push({
+          date: r.date || "",
+          source: r.source || "",
+          category: r.category || "",
+          amount: Number(r.amount) || 0,
+          method: r.method || "",
+          notes: r.notes || "",
+          type: r.type || "expense",
         });
-        readForm();
-        updateView();
-      });
-      els.q?.addEventListener("input", () => { readForm(); updateView(); });
-      els.sort?.addEventListener("change", () => { readForm(); updateView(); });
-      els.pageSize?.addEventListener("change", () => { readForm(); updateView(); });
-      els.prevPage?.addEventListener("click", () => { state.page = Math.max(1, state.page - 1); updateView(); });
-      els.nextPage?.addEventListener("click", () => { state.page = state.page + 1; updateView(); });
-      els.btnExport?.addEventListener("click", exportCSV);
-    }
+      }
 
-    return { wire, updateView, readForm };
+      for (const r of receipts) {
+        all.push({
+          date: r.date || "",
+          source: r.source || "",
+          category: r.category || "",
+          amount: Number(r.amount) || 0,
+          method: r.method || "",
+          notes: r.notes || "",
+          type: r.type || (r.amount >= 0 ? "income" : "expense"),
+        });
+      }
+
+      const expenses = all.filter(r => r.type === "expense");
+      const income = all.filter(r => r.type === "income");
+
+      renderTable(expenses, expenseTbody, filtersForm, expensePageInfo);
+      renderTable(income, incomeTbody, filtersFormIncome, incomePageInfo);
+
+    } catch (err) {
+      console.error("Error loading records:", err);
+      expenseTbody.innerHTML = `<tr><td colspan="6" class="subtle">Error loading expenses.</td></tr>`;
+      incomeTbody.innerHTML = `<tr><td colspan="6" class="subtle">Error loading income.</td></tr>`;
+    }
   }
 
-  // ----------------- MODALS -----------------
-  function wireModals() {
-    const modals = {
-      expense: $("#addExpenseModal"),
-      income: $("#addIncomeModal")
+  // =================== Render Tables ===================
+  function renderTable(records, tbody, form, pageInfo) {
+    if (!form) return;
+
+    const q = form.querySelector("input[type=search]").value.toLowerCase();
+    const category = form.querySelector("select[id^=category]").value;
+    const method = form.querySelector("select[id^=method]").value;
+    const minDate = form.querySelector("input[id^=minDate]").value;
+    const maxDate = form.querySelector("input[id^=maxDate]").value;
+    const minAmt = parseFloat(form.querySelector("input[id^=minAmt]").value) || 0;
+    const maxAmt = parseFloat(form.querySelector("input[id^=maxAmt]").value) || Infinity;
+    const sort = form.querySelector("select[id^=sort]").value;
+    const pageSize = parseInt(form.querySelector("select[id^=pageSize]").value) || 25;
+
+    let filtered = records.filter(r => {
+      const matchQ =
+        !q ||
+        (r.source && r.source.toLowerCase().includes(q)) ||
+        (r.category && r.category.toLowerCase().includes(q)) ||
+        (r.notes && r.notes.toLowerCase().includes(q));
+      const matchCat = !category || r.category === category;
+      const matchMethod = !method || r.method === method;
+      const matchDate =
+        (!minDate || r.date >= minDate) &&
+        (!maxDate || r.date <= maxDate);
+      const matchAmt = r.amount >= minAmt && r.amount <= maxAmt;
+      return matchQ && matchCat && matchMethod && matchDate && matchAmt;
+    });
+
+    filtered.sort((a, b) => {
+      switch (sort) {
+        case "date_asc": return (a.date || "").localeCompare(b.date || "");
+        case "date_desc": return (b.date || "").localeCompare(a.date || "");
+        case "amount_asc": return a.amount - b.amount;
+        case "amount_desc": return b.amount - a.amount;
+        case "source_asc": return (a.source || "").localeCompare(b.source || "");
+        case "source_desc": return (b.source || "").localeCompare(a.source || "");
+        default: return 0;
+      }
+    });
+
+    const display = filtered.slice(0, pageSize);
+    tbody.innerHTML = "";
+
+    if (display.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="subtle">No matching records.</td></tr>`;
+      if (pageInfo) pageInfo.textContent = "Page 1 of 1";
+      return;
+    }
+
+    display.forEach(r => tbody.appendChild(createRow(r)));
+
+    if (pageInfo) {
+      pageInfo.textContent = `Showing ${display.length} of ${filtered.length} record(s)`;
+    }
+  }
+
+  // =================== Add Expense / Income ===================
+  btnAddExpense?.addEventListener("click", () => showModal(addExpenseModal));
+  btnAddIncome?.addEventListener("click", () => showModal(addIncomeModal));
+
+  cancelExpenseBtn?.addEventListener("click", () => hideModal(addExpenseModal));
+  cancelIncomeBtn?.addEventListener("click", () => hideModal(addIncomeModal));
+
+  expenseForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const payload = {
+      type: "expense",
+      date: document.getElementById("expenseDate").value,
+      source: document.getElementById("expenseSource").value,
+      category: document.getElementById("expenseCategory").value,
+      amount: parseFloat(document.getElementById("expenseAmount").value) || 0,
+      method: document.getElementById("expenseMethod").value,
+      notes: document.getElementById("expenseNotes").value,
+      currency: "USD",
     };
-
-    const forms = {
-      expense: $("#expenseForm"),
-      income: $("#incomeForm")
-    };
-
-    // Open modals
-    $("#btnAddExpense")?.addEventListener("click", () => modals.expense.classList.remove("hidden"));
-    $("#btnAddIncome")?.addEventListener("click", () => modals.income.classList.remove("hidden"));
-
-    // Cancel buttons
-    $("#cancelExpenseBtn")?.addEventListener("click", () => modals.expense.classList.add("hidden"));
-    $("#cancelIncomeBtn")?.addEventListener("click", () => modals.income.classList.add("hidden"));
-
-    // Save to backend
-    async function saveTransaction(txn) {
-      // Validate amount as number so server accepts it
-      if (typeof txn.amount !== "number") txn.amount = parseFloat(txn.amount) || 0;
-      const resp = await fetch(POST_URL, {
+  
+    try {
+      const res = await fetch(`${API_BASE}/records`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(txn)
+        body: JSON.stringify(payload),
       });
-      if (!resp.ok) {
-        const err = await resp.json().catch(()=>({error:"save failed"}));
-        throw new Error(err?.error || `Save failed (${resp.status})`);
-      }
-      // reload from DB
-      await loadData();
-    }
-
-    forms.expense?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const txn = {
-        type: "expense",
-        date: $("#expenseDate").value,
-        source: $("#expenseSource").value,
-        category: $("#expenseCategory").value,
-        amount: parseFloat($("#expenseAmount").value) || 0,
-        method: $("#expenseMethod").value,
-        notes: $("#expenseNotes").value
-      };
-      try {
-        await saveTransaction(txn);
-        modals.expense.classList.add("hidden");
-        forms.expense.reset();
-        alert("Expense added!");
-      } catch (err) {
-        console.error(err);
-        alert("Failed to save expense: " + err.message);
-      }
-    });
-
-    forms.income?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const txn = {
-        type: "income",
-        date: $("#incomeDate").value,
-        source: $("#incomeSource").value,
-        category: $("#incomeCategory").value,
-        amount: parseFloat($("#incomeAmount").value) || 0,
-        method: $("#incomeMethod").value,
-        notes: $("#incomeNotes").value
-      };
-      try {
-        await saveTransaction(txn);
-        modals.income.classList.add("hidden");
-        forms.income.reset();
-        alert("Income added!");
-      } catch (err) {
-        console.error(err);
-        alert("Failed to save income: " + err.message);
-      }
-    });
-  }
-
-  // ----------------- INIT -----------------
-  async function init() {
-    wireModals();
-
-    try {
-      await loadData();
-
-      const expensesCtrl = makeController({
-        prefix: "exp",
-        rows: () => EXP_RAW,
-        textFields: ["source", "category", "notes"],
-        sortKeys: { alpha: "source" },
-        columns: (t) => `
-          <td>${fmtDate(t.date)}</td>
-          <td>${t.source || ""}</td>
-          <td>${t.category || ""}</td>
-          <td class="num">${fmtMoney(t.amount, summaryCurrency)}</td>
-          <td>${t.method || ""}</td>
-          <td>${t.notes || ""}</td>
-        `
-      });
-
-      const incomeCtrl = makeController({
-        prefix: "inc",
-        rows: () => INC_RAW,
-        textFields: ["source", "category", "notes"],
-        sortKeys: { alpha: "source" },
-        columns: (t) => `
-          <td>${fmtDate(t.date)}</td>
-          <td>${t.source || ""}</td>
-          <td>${t.category || ""}</td>
-          <td class="num">${fmtMoney(t.amount, summaryCurrency)}</td>
-          <td>${t.method || ""}</td>
-          <td>${t.notes || ""}</td>
-        `
-      });
-
-      expensesCtrl.wire();
-      incomeCtrl.wire();
-      expensesCtrl.readForm();
-      incomeCtrl.readForm();
-      expensesCtrl.updateView();
-      incomeCtrl.updateView();
+      if (!res.ok) throw new Error("Failed to save expense");
+      hideModal(addExpenseModal);
+      expenseForm.reset();
+      loadRecords();
     } catch (err) {
-      console.error(err);
-      const tb1 = $("#recordsTbody");
-      const tb2 = $("#recordsTbodyIncome");
-      if (tb1) tb1.innerHTML = `<tr><td colspan="6" class="subtle">Failed to load data.</td></tr>`;
-      if (tb2) tb2.innerHTML = `<tr><td colspan="6" class="subtle">Failed to load data.</td></tr>`;
+      alert("Error saving expense: " + err.message);
     }
-  }
+  });
+  
+  incomeForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const payload = {
+      type: "income",
+      date: document.getElementById("incomeDate").value,
+      source: document.getElementById("incomeSource").value,
+      category: document.getElementById("incomeCategory").value,
+      amount: parseFloat(document.getElementById("incomeAmount").value) || 0,
+      method: document.getElementById("incomeMethod").value,
+      notes: document.getElementById("incomeNotes").value,
+      currency: "USD",
+    };
+  
+    try {
+      const res = await fetch(`${API_BASE}/records`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Failed to save income");
+      hideModal(addIncomeModal);
+      incomeForm.reset();
+      loadRecords();
+    } catch (err) {
+      alert("Error saving income: " + err.message);
+    }
+  });
+  
+  // =================== Filter Events ===================
+  filtersForm?.addEventListener("submit", e => {
+    e.preventDefault();
+    loadRecords();
+  });
+  filtersFormIncome?.addEventListener("submit", e => {
+    e.preventDefault();
+    loadRecords();
+  });
 
-  document.addEventListener("DOMContentLoaded", init);
-})();
+  document.getElementById("btnClear")?.addEventListener("click", () => {
+    filtersForm.reset();
+    loadRecords();
+  });
+  document.getElementById("btnClearIncome")?.addEventListener("click", () => {
+    filtersFormIncome.reset();
+    loadRecords();
+  });
+
+  // =================== Init ===================
+  loadRecords();
+});

@@ -12,9 +12,9 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles/default.css" />
-  <link rel="stylesheet" href="styles/index.css" />
+  <link rel="stylesheet" href="styles/auth.css" />
 </head>
-<body class="landing-dark">
+<body class="landing-light">
   <!-- Header -->
   <header class="nf-header" role="banner">
     <div class="nf-header-inner">
@@ -22,7 +22,7 @@
         <span class="nf-logo">Finance App</span>
       </div>
       <nav class="nf-auth-right" aria-label="Authentication">
-        <a href="home.html" class="nf-login">Login</a>
+        <a href="login.html" class="nf-login">Login</a>
       </nav>
     </div>
   </header>
@@ -37,20 +37,43 @@
         </p>
 
         <!-- Create account box -->
-        <form class="nf-signup" action="register.html" method="get">
+        <form id="registerForm" class="auth-form" novalidate>
+          <label for="name">Full Name</label>
           <input
-            type="email"
-            name="email"
-            class="nf-input"
-            placeholder="Email address"
-            aria-label="Email address"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Your Name"
+            autocomplete="name"
             required
           />
-          <button type="submit" class="nf-btn">Get Started</button>
+
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Create a strong password"
+            autocomplete="new-password"
+            minlength="6"
+            required
+          />
+          <button type="submit" id="registerBtn">Create Account</button>
+          <p id="registerMessage" class="form-message" aria-live="polite"></p>
         </form>
-        <small class="nf-hint">
-          Enter your email to create your account or restart your membership.
-        </small>
+        <div class="auth-links">
+          <p>Already have an account? <a href="login.html">Login</a></p>
+        </div>
       </div>
     </section>
 
@@ -93,11 +116,6 @@
     </div>
   </footer>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const y = document.getElementById('year');
-      if (y) y.textContent = new Date().getFullYear();
-    });
-  </script>
+  <script src="scripts/register.js"></script>
 </body>
 </html>

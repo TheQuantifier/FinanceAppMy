@@ -124,7 +124,7 @@
       <form id="filtersFormIncome">
         <div class="grid">
           <label><span>Search</span><input type="search" id="qIncome" placeholder="Source, notes, category…" /></label>
-          <label><span>Source (Category)</span><select id="categoryIncome"><option value="">All</option></select></label>
+          <label><span>Category</span><select id="categoryIncome"><option value="">All</option></select></label>
           <label><span>Method</span>
             <select id="methodIncome">
               <option value="">All</option>
@@ -192,97 +192,55 @@
     </section>
 
     <!-- ==================== MODALS ==================== -->
-    <!-- Add New Expense Modal -->
-<div id="addExpenseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
-  <div class="modal-content card">
-    <h2 id="expenseModalTitle">Add New Expense</h2>
-    <form id="expenseForm" class="txn-form">
-      <div class="form-row">
-        <label>
-          <span>Date</span>
-          <input type="date" id="expenseDate" required />
-        </label>
-        <label>
-          <span>Amount</span>
-          <input type="number" id="expenseAmount" step="0.01" required />
-        </label>
+    <!-- Add Expense Modal -->
+    <div id="addExpenseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
+      <div class="modal-content card">
+        <h2 id="expenseModalTitle">Add New Expense</h2>
+        <form id="expenseForm" class="txn-form">
+          <div class="form-row">
+            <label><span>Date</span><input type="date" id="expenseDate" required /></label>
+            <label><span>Amount</span><input type="number" id="expenseAmount" step="0.01" required /></label>
+          </div>
+          <div class="form-row">
+            <label><span>Source</span><input type="text" id="expenseSource" required /></label>
+            <label><span>Category</span><input type="text" id="expenseCategory" required /></label>
+          </div>
+          <div class="form-row">
+            <label><span>Payment Method</span><input type="text" id="expenseMethod" /></label>
+            <label><span>Notes</span><input type="text" id="expenseNotes" /></label>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn btn--primary">Save Expense</button>
+            <button type="button" class="btn" id="cancelExpenseBtn">Cancel</button>
+          </div>
+        </form>
       </div>
+    </div>
 
-      <div class="form-row">
-        <label>
-          <span>Source</span>
-          <input type="text" id="expenseSource" required />
-        </label>
-        <label>
-          <span>Category</span>
-          <input type="text" id="expenseCategory" required />
-        </label>
+    <!-- Add Income Modal -->
+    <div id="addIncomeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="incomeModalTitle">
+      <div class="modal-content card">
+        <h2 id="incomeModalTitle">Add New Income</h2>
+        <form id="incomeForm" class="txn-form">
+          <div class="form-row">
+            <label><span>Date</span><input type="date" id="incomeDate" required /></label>
+            <label><span>Amount</span><input type="number" id="incomeAmount" step="0.01" required /></label>
+          </div>
+          <div class="form-row">
+            <label><span>Source</span><input type="text" id="incomeSource" required /></label>
+            <label><span>Category</span><input type="text" id="incomeCategory" required /></label>
+          </div>
+          <div class="form-row">
+            <label><span>Payment Method</span><input type="text" id="incomeMethod" /></label>
+            <label><span>Notes</span><input type="text" id="incomeNotes" /></label>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn btn--primary">Save Income</button>
+            <button type="button" class="btn" id="cancelIncomeBtn">Cancel</button>
+          </div>
+        </form>
       </div>
-
-      <div class="form-row">
-        <label>
-          <span>Payment Method</span>
-          <input type="text" id="expenseMethod" />
-        </label>
-        <label>
-          <span>Notes</span>
-          <input type="text" id="expenseNotes" />
-        </label>
-      </div>
-
-      <div class="modal-actions">
-        <button type="submit" class="btn btn--primary">Save Expense</button>
-        <button type="button" class="btn" id="cancelExpenseBtn">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Add New Income Modal -->
-<div id="addIncomeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="incomeModalTitle">
-  <div class="modal-content card">
-    <h2 id="incomeModalTitle">Add New Income</h2>
-    <form id="incomeForm" class="txn-form">
-      <div class="form-row">
-        <label>
-          <span>Date</span>
-          <input type="date" id="incomeDate" required />
-        </label>
-        <label>
-          <span>Amount</span>
-          <input type="number" id="incomeAmount" step="0.01" required />
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label>
-          <span>Source</span>
-          <input type="text" id="incomeSource" required />
-        </label>
-        <label>
-          <span>Category</span>
-          <input type="text" id="incomeCategory" required />
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label>
-          <span>Payment Method</span>
-          <input type="text" id="incomeMethod" />
-        </label>
-        <label>
-          <span>Notes</span>
-          <input type="text" id="incomeNotes" />
-        </label>
-      </div>
-
-      <div class="modal-actions">
-        <button type="submit" class="btn btn--primary">Save Income</button>
-        <button type="button" class="btn" id="cancelIncomeBtn">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
+    </div>
 
   </main>
 
