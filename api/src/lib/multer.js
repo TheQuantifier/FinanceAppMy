@@ -38,12 +38,18 @@ const storage = multer.diskStorage({
 });
 
 /**
- * Multer upload instance
- * Limits: 50 MB max
+ * Multer upload instances
+ * - upload: disk storage (50 MB)
+ * - uploadMem: memory storage (50 MB) — used for GridFS path
  */
 const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
 });
 
-module.exports = { upload, isAllowedFile };
+const uploadMem = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+});
+
+module.exports = { upload, uploadMem, isAllowedFile };
