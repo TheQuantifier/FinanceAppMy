@@ -4,12 +4,11 @@
    Lists & deletes via /api/receipts using api.js helpers.
    =============================================== */
 
-import { api, API_BASE as API_API_BASE } from "./api.js";
+import { api, API_BASE } from "./api.js";
 
 (function () {
-  // ---- Base constants ----
-  // API_API_BASE already ends with /api (e.g. https://financeappmy.onrender.com/api)
-  const ROOT_BASE = API_API_BASE.replace(/\/api$/, "");
+  // All calls go through API_BASE (ends with /api)
+  const UPLOAD_URL = `${API_BASE}/receipts`;
 
   const ACCEPTED = ["application/pdf", "image/png", "image/jpeg"];
   const MAX_MB = 50;
@@ -99,10 +98,9 @@ import { api, API_BASE as API_API_BASE } from "./api.js";
 
   async function refreshRecent() {
     try {
-      const rows = await api.listReceipts(); // uses /api/receipts
+      const rows = await api.listReceipts(); // GET /api/receipts
       renderRecentRows(rows || []);
     } catch (err) {
-      // Not authed? bounce to login with redirect
       if ((err.message || "").toLowerCase().includes("not")) {
         const url = new URL("./login.html", location.href);
         url.searchParams.set("redirect", "upload.html");
@@ -251,8 +249,8 @@ import { api, API_BASE as API_API_BASE } from "./api.js";
       setStatus(`Uploading ${file.name}…`);
 
       try {
-        // ✅ Corrected endpoint: /api/receipts
-        await fetchJSON(`${API_API_BASE}/receipts`, { method: "POST", body: fd });
+        // Correct endpoint: POST /api/receipts
+        await fetchJSON(UPLOAD_URL, { method: "POST", body: fd });
         setStatus(`Uploaded: ${file.name}`);
         queue.shift();
         renderQueue();
