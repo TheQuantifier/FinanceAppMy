@@ -64,7 +64,7 @@ exports.upload = async (req, res, next) => {
 
 /**
  * GET /api/receipts
- * Returns the most recent 100 receipts with parsed financial fields
+ * Returns the most recent 100 receipts with all metadata fields.
  */
 exports.list = async (_req, res, next) => {
   try {
@@ -75,14 +75,22 @@ exports.list = async (_req, res, next) => {
 
     const cleaned = rows.map((r) => ({
       _id: String(r._id),
-      date: r.date || null,
-      source: r.source || null,
+
+      // File metadata
+      original_filename: r.original_filename || null,
+      stored_filename:   r.stored_filename   || null,
+      mimetype:          r.mimetype          || null,
+      size_bytes:        r.size_bytes ?? null,
+      uploaded_at:       r.uploaded_at,
+      parse_status:      r.parse_status || "raw",
+
+      // Parsed fields
+      date:     r.date || null,
+      source:   r.source || null,
       category: r.category || null,
-      amount: r.amount ?? null,
-      method: r.method || null,
-      notes: r.notes || null,
-      parse_status: r.parse_status,
-      uploaded_at: r.uploaded_at,
+      amount:   r.amount ?? null,
+      method:   r.method || null,
+      notes:    r.notes || null,
     }));
 
     return res.json(cleaned);
@@ -93,7 +101,7 @@ exports.list = async (_req, res, next) => {
 
 /**
  * GET /api/receipts/:id
- * Returns normalized financial fields for a single receipt
+ * Returns all metadata + parsed financial fields for a single receipt.
  */
 exports.getOne = async (req, res, next) => {
   try {
@@ -102,12 +110,23 @@ exports.getOne = async (req, res, next) => {
 
     return res.json({
       _id: String(r._id),
-      Date: r.date || null,
-      Source: r.source || null,
+
+      // File metadata
+      original_filename: r.original_filename || null,
+      stored_filename:   r.stored_filename   || null,
+      mimetype:          r.mimetype          || null,
+      size_bytes:        r.size_bytes ?? null,
+      uploaded_at:       r.uploaded_at,
+      parse_status:      r.parse_status || "raw",
+
+      // Parsed fields
+      Date:     r.date || null,
+      Source:   r.source || null,
       Category: r.category || null,
-      Amount: r.amount || null,
-      Method: r.method || null,
-      Notes: r.notes || null,
+      Amount:   r.amount ?? null,
+      Method:   r.method || null,
+      Notes:    r.notes || null,
+      Type:     r.type || "expense",
     });
   } catch (e) {
     return next(e);
