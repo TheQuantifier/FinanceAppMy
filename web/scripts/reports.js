@@ -1,39 +1,97 @@
-// reports.js
-// Dynamically loads report data from /data/sample.json and generates charts
-// Now computes all summary values from raw arrays (no summary object required).
+// web/scripts/reports.js
+// Computes summary values from live backend data (with fallback to data/sample.json)
+// Renders: Doughnut (by category) + Line (income vs expenses over time)
+
+import { api } from "./api.js";
+
+let _catChart = null;
+let _lineChart = null;
+
+window.addEventListener("DOMContentLoaded", loadReports);
 
 async function loadReports() {
   try {
-    const response = await fetch("data/sample.json", { cache: "no-store" });
-    if (!response.ok) throw new Error("Failed to load report data.");
+    // Try backend first
+    const [records, receipts] = await Promise.all([
+      api.listRecords().catch(() => []),
+      api.listReceipts().catch(() => []),
+    ]);
 
-    const data = await response.json();
+    const normalized = normalizeData(records, receipts);
+    const derived = computeSummaryFromRaw(normalized.expenses, normalized.income, normalized.currency);
 
-    const txns = (data.expenses || []).filter(Boolean);
-    const incomes = (data.income || []).filter(Boolean);
-
-    const derived = computeSummaryFromRaw(txns, incomes, data.summary?.currency);
-
-    // Populate summary cards
     updateSummary(derived);
-
-    // Generate charts
     renderCategoryChart(derived.categories);
-    renderIncomeExpenseOverTime(txns, incomes);
+    renderIncomeExpenseOverTime(normalized.expenses, normalized.income);
+  } catch (apiErr) {
+    console.warn("API unavailable, using fallback:", apiErr?.message || apiErr);
+    // Fallback to sample JSON
+    try {
+      const response = await fetch("data/sample.json", { cache: "no-store" });
+      if (!response.ok) throw new Error("Failed to load report data.");
+      const data = await response.json();
 
-  } catch (error) {
-    console.error("Error loading reports:", error);
-    document.querySelectorAll(".card p").forEach(p => (p.textContent = "Error loading data"));
+      const txns = (data.expenses || []).filter(Boolean);
+      const incomes = (data.income || []).filter(Boolean);
+
+      const derived = computeSummaryFromRaw(txns, incomes, data.summary?.currency);
+      updateSummary(derived);
+      renderCategoryChart(derived.categories);
+      renderIncomeExpenseOverTime(txns, incomes);
+    } catch (err) {
+      console.error("Error loading reports:", err);
+      document.querySelectorAll(".card p").forEach(p => (p.textContent = "Error loading data"));
+    }
   }
 }
 
-// ========== Derivations from raw data ==========
+/* ===================== Normalization ===================== */
+
+function normalizeData(records = [], receipts = []) {
+  const all = [];
+
+  // records from /api/records (already typed)
+  for (const r of records) {
+    all.push({
+      type: (r.type || "expense").toLowerCase(),
+      date: r.date || "",
+      source: r.source || "",
+      category: r.category || "Uncategorized",
+      amount: toNumber(r.amount),
+      method: r.method || "",
+      notes: r.notes || "",
+      currency: r.currency || "USD",
+    });
+  }
+
+  // receipts from /api/receipts (no type → infer by amount sign)
+  for (const r of receipts) {
+    const amt = toNumber(r.amount);
+    all.push({
+      type: (amt >= 0 ? "income" : "expense"),
+      date: r.date || "",
+      source: r.source || "",
+      category: r.category || "Uncategorized",
+      amount: Math.abs(amt), // treat negative as expense magnitude
+      method: r.method || "",
+      notes: r.notes || "",
+      currency: r.currency || "USD",
+    });
+  }
+
+  const expenses = all.filter(x => x.type === "expense");
+  const income = all.filter(x => x.type === "income");
+  const currency = (all[0]?.currency) || "USD";
+
+  return { expenses, income, currency };
+}
+
+/* ===================== Derivations ===================== */
 
 function computeSummaryFromRaw(expenses, income, currencyHint) {
   const CURRENCY_FALLBACK = "USD";
   const currency = currencyHint || CURRENCY_FALLBACK;
 
-  // 1) Total spending and category sums from expenses
   const categories = {};
   let total_spending = 0;
 
@@ -44,8 +102,7 @@ function computeSummaryFromRaw(expenses, income, currencyHint) {
     categories[cat] = (categories[cat] || 0) + amt;
   }
 
-  // 2) Monthly average spending (based on months that have at least one expense)
-  //    Fallback to simple average across categories if no month info found.
+  // Monthly average spending (based on distinct months with expenses)
   const monthsWithSpend = new Set();
   for (const t of expenses) {
     const key = yyyymm(t?.date);
@@ -54,7 +111,7 @@ function computeSummaryFromRaw(expenses, income, currencyHint) {
   const monthCount = Math.max(1, monthsWithSpend.size);
   const monthly_average = total_spending / monthCount;
 
-  // 3) Top category
+  // Top category
   const topCategory = getTopCategory(categories);
 
   return {
@@ -62,21 +119,19 @@ function computeSummaryFromRaw(expenses, income, currencyHint) {
     total_spending,
     categories,
     monthly_average,
-    topCategory
+    topCategory,
   };
 }
 
-// ========== Summary Section ==========
+/* ===================== Summary Cards ===================== */
 
-function updateSummary(derived) {
-  const { currency, total_spending, categories, monthly_average, topCategory } = derived;
-
+function updateSummary({ currency, total_spending, monthly_average, topCategory }) {
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => `$${(toNumber(n)).toFixed(2)} ${currency}`;
 
-  $("total-expenses").textContent = fmt(total_spending);
-  $("monthly-average").textContent = fmt(monthly_average);
-  $("top-category").textContent = topCategory || "N/A";
+  $("total-expenses") && ( $("total-expenses").textContent = fmt(total_spending) );
+  $("monthly-average") && ( $("monthly-average").textContent = fmt(monthly_average) );
+  $("top-category") && ( $("top-category").textContent = topCategory || "N/A" );
 }
 
 function getTopCategory(categories) {
@@ -91,17 +146,23 @@ function getTopCategory(categories) {
   return top;
 }
 
-// ========== Charts ==========
+/* ===================== Charts ===================== */
 
-// Chart 1: Spending by Category (with percentage labels)
+// Doughnut: Spending by Category
 function renderCategoryChart(categories) {
   const ctx = document.getElementById("categoryChart");
-  if (!ctx) return;
+  if (!ctx || !window.Chart) return;
 
   const labels = Object.keys(categories || {});
   const dataVals = Object.values(categories || {});
 
-  new Chart(ctx, {
+  // Destroy previous if exists (prevents overlay on re-render)
+  if (_catChart) {
+    _catChart.destroy();
+    _catChart = null;
+  }
+
+  _catChart = new Chart(ctx, {
     type: "doughnut",
     data: {
       labels,
@@ -129,20 +190,18 @@ function renderCategoryChart(categories) {
         },
       },
     },
-    plugins: [ChartDataLabels],
+    plugins: [window.ChartDataLabels].filter(Boolean),
   });
 }
 
-// Chart 2: Income & Expenses Over Time (sums by day, with toggles)
+// Line: Income & Expenses Over Time (sum by day)
 function renderIncomeExpenseOverTime(expenses, income) {
   const ctx = document.getElementById("monthlyChart");
-  if (!ctx) return;
+  if (!ctx || !window.Chart) return;
 
-  // Sum by ISO date (YYYY-MM-DD). Missing/invalid dates get ignored.
   const expenseByDate = sumByDate(expenses);
   const incomeByDate = sumByDate(income);
 
-  // Union of all dates
   const labels = Array.from(new Set([...Object.keys(expenseByDate), ...Object.keys(incomeByDate)]))
     .filter(Boolean)
     .sort();
@@ -150,7 +209,13 @@ function renderIncomeExpenseOverTime(expenses, income) {
   const expenseData = labels.map(d => toNumber(expenseByDate[d]));
   const incomeData = labels.map(d => toNumber(incomeByDate[d]));
 
-  const chart = new Chart(ctx, {
+  // Destroy previous
+  if (_lineChart) {
+    _lineChart.destroy();
+    _lineChart = null;
+  }
+
+  _lineChart = new Chart(ctx, {
     type: "line",
     data: {
       labels,
@@ -174,9 +239,7 @@ function renderIncomeExpenseOverTime(expenses, income) {
       ],
     },
     options: {
-      scales: {
-        y: { beginAtZero: true },
-      },
+      scales: { y: { beginAtZero: true } },
       plugins: {
         legend: { position: "top" },
         tooltip: {
@@ -188,28 +251,28 @@ function renderIncomeExpenseOverTime(expenses, income) {
     },
   });
 
-  // === Checkboxes for toggling ===
+  // Checkbox toggles
   const expToggle = document.getElementById("toggle-expenses");
   const incToggle = document.getElementById("toggle-income");
 
   if (expToggle) {
-    chart.data.datasets[0].hidden = !expToggle.checked;
+    _lineChart.data.datasets[0].hidden = !expToggle.checked;
     expToggle.addEventListener("change", () => {
-      chart.data.datasets[0].hidden = !expToggle.checked;
-      chart.update("none");
+      _lineChart.data.datasets[0].hidden = !expToggle.checked;
+      _lineChart.update("none");
     });
   }
 
   if (incToggle) {
-    chart.data.datasets[1].hidden = !incToggle.checked;
+    _lineChart.data.datasets[1].hidden = !incToggle.checked;
     incToggle.addEventListener("change", () => {
-      chart.data.datasets[1].hidden = !incToggle.checked;
-      chart.update("none");
+      _lineChart.data.datasets[1].hidden = !incToggle.checked;
+      _lineChart.update("none");
     });
   }
 }
 
-// ========== Helpers ==========
+/* ===================== Helpers ===================== */
 
 function toNumber(x) {
   const n = Number(x);
@@ -219,7 +282,6 @@ function toNumber(x) {
 // return "YYYY-MM" or null if invalid
 function yyyymm(iso) {
   if (!iso || typeof iso !== "string") return null;
-  // Accept "YYYY-MM" or "YYYY-MM-DD"
   const m = iso.match(/^(\d{4})-(\d{2})(?:-\d{2})?$/);
   return m ? `${m[1]}-${m[2]}` : null;
 }
@@ -238,10 +300,8 @@ function sumByDate(rows) {
 // Normalize to "YYYY-MM-DD" if possible, else null
 function normalizeDateKey(iso) {
   if (!iso || typeof iso !== "string") return null;
-  // If provided as "YYYY-MM", skip (we chart daily)
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) return iso;
-  // Try to parse a Date; if valid, reformat to YYYY-MM-DD
   const date = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
   if (isNaN(date)) return null;
   const yyyy = String(date.getFullYear());
@@ -249,5 +309,3 @@ function normalizeDateKey(iso) {
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
-
-window.addEventListener("DOMContentLoaded", loadReports);

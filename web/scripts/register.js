@@ -1,74 +1,69 @@
+// web/scripts/register.js
+import { api } from "./api.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const API_BASE = "http://localhost:4000/api/auth";
   const form = document.getElementById("registerForm");
   const msg = document.getElementById("registerMessage");
+  const nameEl = document.getElementById("name");
+  const emailEl = document.getElementById("email");
+  const passEl = document.getElementById("password");
+  const submitBtn = form?.querySelector('button[type="submit"]');
 
   if (!form) {
     console.error("❌ registerForm not found on page.");
     return;
   }
 
+  function setMsg(text, color) {
+    if (!msg) return;
+    msg.textContent = text;
+    msg.style.color = color || "";
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg.textContent = "";
-    msg.style.color = "";
+    setMsg("", "");
 
-    // --- Collect input values ---
-    const name = document.getElementById("name")?.value.trim();
-    const email = document.getElementById("email")?.value.trim();
-    const password = document.getElementById("password")?.value;
+    const name = nameEl?.value.trim();
+    const email = emailEl?.value.trim();
+    const password = passEl?.value || "";
 
     // --- Basic validation ---
     if (!name || !email || !password) {
-      msg.textContent = "Please fill in all fields.";
-      msg.style.color = "red";
-      return;
+      return setMsg("Please fill in all fields.", "red");
     }
-
-    if (!email.includes("@") || !email.includes(".")) {
-      msg.textContent = "Please enter a valid email address.";
-      msg.style.color = "red";
-      return;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return setMsg("Please enter a valid email address.", "red");
     }
-
     if (password.length < 8) {
-      msg.textContent = "Password must be at least 6 characters long.";
-      msg.style.color = "red";
-      return;
+      return setMsg("Password must be at least 8 characters long.", "red");
     }
 
-    // --- Prepare request body ---
-    const payload = { name, email, password };
-
-    msg.textContent = "Creating your account...";
-    msg.style.color = "black";
+    // Disable while submitting
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.dataset.loading = "true";
+    }
+    setMsg("Creating your account...", "black");
 
     try {
-      const res = await fetch(`${API_BASE}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      await api.register({ name, email, password });
 
-      const data = await res.json();
+      setMsg("✅ Account created successfully! Redirecting...", "green");
 
-      if (!res.ok) {
-        msg.textContent = data.error || "Registration failed. Please try again.";
-        msg.style.color = "red";
-        return;
-      }
+      // Optional: support ?redirect=/somepage (defaults to login.html)
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get("redirect") || "login.html";
 
-      // --- Success message and redirect ---
-      msg.textContent = "✅ Account created successfully! Redirecting...";
-      msg.style.color = "green";
-
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 1500);
+      setTimeout(() => (window.location.href = redirect), 900);
     } catch (err) {
-      console.error("Registration error:", err);
-      msg.textContent = "⚠️ Something went wrong. Please try again later.";
-      msg.style.color = "red";
+      // Common backend errors: "Email already registered", etc.
+      setMsg(err.message || "Registration failed. Please try again.", "red");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        delete submitBtn.dataset.loading;
+      }
     }
   });
 });

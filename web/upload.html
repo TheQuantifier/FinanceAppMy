@@ -75,11 +75,9 @@
   <!-- Footer injected by default.js -->
   <div id="footer"></div>
 
-  <script src="scripts/default.js" defer></script>
-  <script>
-    // Optional: override API from querystring ?api=https://my.api
-    window.API_BASE = new URLSearchParams(location.search).get("api") || "http://localhost:4000";
-  </script>
-  <script src="scripts/upload.js" defer></script>
+  <!-- Scripts -->
+  <script type="module" defer src="./scripts/api.js"></script>
+  <script type="module" defer src="./scripts/default.js"></script>
+  <script type="module" defer src="./scripts/upload.js"></script>
 </body>
 </html>

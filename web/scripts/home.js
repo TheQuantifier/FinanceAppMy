@@ -1,13 +1,15 @@
 // ========== HOME DASHBOARD LOGIC (no header/footer loading here) ==========
+import { api } from "./api.js";
+
 (() => {
-  const DATA_URL = "data/sample.json"; // adjust if your path differs
+  const DATA_URL = "data/sample.json"; // fallback if API unavailable
   const CURRENCY_FALLBACK = "USD";
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
   const fmtMoney = (value, currency) =>
     new Intl.NumberFormat(undefined, { style: "currency", currency: currency || CURRENCY_FALLBACK })
-      .format((Number.isFinite(value) ? value : 0));
+      .format(Number.isFinite(+value) ? +value : 0);
 
   const fmtDate = (iso) =>
     new Date(iso + (iso?.length === 10 ? "T00:00:00" : ""))
@@ -89,36 +91,25 @@
       });
   }
 
-  // ----- compute overview dynamically from JSON -----
-  function computeOverview(json) {
-    const expenses = (json.expenses || []).filter(Boolean);
-    const income = (json.income || []).filter(Boolean);
-
-    const currency =
-      json.summary?.currency ||
-      // try to infer from a txn if you ever add a currency field there; else fallback:
-      CURRENCY_FALLBACK;
+  // ----- compute overview dynamically from normalized txns -----
+  function computeOverview({ expenses = [], income = [] }) {
+    const currency = (expenses[0]?.currency || income[0]?.currency) || CURRENCY_FALLBACK;
 
     const total_spending = expenses.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     const total_income   = income.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
     const net_balance    = total_income - total_spending;
 
-    // build expense category totals for chart/breakdown
     const categories = expenses.reduce((acc, t) => {
       const key = t.category || "Uncategorized";
       acc[key] = (acc[key] || 0) + (Number(t.amount) || 0);
       return acc;
     }, {});
 
-    // last updated: latest date seen across expenses + income; fallback to summary.last_updated
-    const dates = [
-      ...expenses.map(t => t.date),
-      ...income.map(i => i.date),
-    ].filter(Boolean);
+    const dates = [...expenses.map(t => t.date), ...income.map(i => i.date)].filter(Boolean);
     const latestISO = dates.length ? dates.sort().slice(-1)[0] : null;
     const last_updated = latestISO
       ? new Date(latestISO + (latestISO.length === 10 ? "T00:00:00" : "")).toISOString()
-      : (json.summary?.last_updated || new Date().toISOString());
+      : new Date().toISOString();
 
     return { total_spending, total_income, net_balance, currency, categories, last_updated };
   }
@@ -130,13 +121,14 @@
     $("#lastUpdated").textContent = `Data updated ${new Date(comp.last_updated).toLocaleString()}`;
   }
 
-  function renderexpenses(tbody, txns, currency) {
+  function renderExpenses(tbody, txns, currency) {
     if (!tbody) return;
     tbody.innerHTML = "";
     (txns || [])
       .slice()
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 8)
+      .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+      .slice(-8) // last 8
+      .reverse() // newest first
       .forEach(txn => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -144,7 +136,7 @@
           <td>${txn.source || ""}</td>
           <td>${txn.category || ""}</td>
           <td class="num">${fmtMoney(txn.amount, currency)}</td>
-          <td>${txn.payment_method || ""}</td>
+          <td>${txn.method || ""}</td>
           <td>${txn.notes || ""}</td>
         `;
         tbody.appendChild(tr);
@@ -157,108 +149,132 @@
     }
   }
 
-  async function loadData() {
+  // Normalize data shape to { expenses, income }
+  function normalizeForDashboard(records = [], fallbackJson = null) {
+    if (records.length) {
+      return {
+        expenses: records.filter(r => (r.type || "expense") === "expense"),
+        income:   records.filter(r => r.type === "income"),
+      };
+    }
+    // Fallback to sample.json shape if provided
+    if (fallbackJson) {
+      const localTxns = JSON.parse(localStorage.getItem("userTxns") || "[]");
+      const localExpenses = localTxns.filter(t => t.type === "expense");
+      const localIncome = localTxns.filter(t => t.type === "income");
+
+      return {
+        expenses: [...(fallbackJson.expenses || []), ...localExpenses],
+        income:   [...(fallbackJson.income || []), ...localIncome],
+      };
+    }
+    return { expenses: [], income: [] };
+  }
+
+  async function loadFromApi() {
+    const rows = await api.listRecords(); // throws if not authed or server down
+    return normalizeForDashboard(rows);
+  }
+
+  async function loadFromFallback() {
     const resp = await fetch(DATA_URL, { cache: "no-store" });
     if (!resp.ok) throw new Error(`Failed to load data (${resp.status})`);
     const json = await resp.json();
-  
-    const localTxns = JSON.parse(localStorage.getItem("userTxns") || "[]");
-    const localExpenses = localTxns.filter(txn => txn.type === "expense");
-    const localIncome = localTxns.filter(txn => txn.type === "income");
-  
-    json.expenses = [...(json.expenses || []), ...localExpenses];
-    json.income = [...(json.income || []), ...localIncome];
-  
-    return json;
+    return normalizeForDashboard([], json);
   }
 
-  function wireActions() {
+  async function wireActions(onNewData) {
     const modal = $("#addTxnModal");
     const form = $("#txnForm");
     const btnCancel = $("#btnCancelModal");
-  
-    $("#btnUpload")?.addEventListener("click", () => alert("Open upload flow…"));
+
+    $("#btnUpload")?.addEventListener("click", () => (window.location.href = "./upload.html"));
     $("#btnExport")?.addEventListener("click", () => alert("Exporting CSV…"));
-  
+
     // Show modal
     $("#btnAddTxn")?.addEventListener("click", () => {
-      modal.classList.remove("hidden");
+      modal?.classList.remove("hidden");
     });
-  
+
     // Hide modal
     btnCancel?.addEventListener("click", () => {
-      modal.classList.add("hidden");
+      modal?.classList.add("hidden");
     });
-  
-    // Handle Save
-    form?.addEventListener("submit", (e) => {
-      e.preventDefault();
-    
-      const newTxn = {
-        date: $("#txnDate").value,
-        source: $("#txnSource").value,
-        category: $("#txnCategory").value,
-        amount: parseFloat($("#txnAmount").value),
-        payment_method: $("#txnMethod").value,
-        notes: $("#txnNotes").value
-      };
-    
-      // Save transaction in localStorage
-      const stored = JSON.parse(localStorage.getItem("userTxns") || "[]");
-      stored.push(newTxn);
-      localStorage.setItem("userTxns", JSON.stringify(stored));
-    
-      // Add visually to the table right away
-      const tbody = $("#txnTbody");
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${fmtDate(newTxn.date)}</td>
-        <td>${newTxn.source}</td>
-        <td>${newTxn.category}</td>
-        <td class="num">${fmtMoney(newTxn.amount, "USD")}</td>
-        <td>${newTxn.payment_method}</td>
-        <td>${newTxn.notes}</td>
-      `;
-      tbody.prepend(tr);
-    
-      // Close modal and notify
-      $("#addTxnModal").classList.add("hidden");
-      alert("Transaction added successfully!");
-    });    
-  }
-  
 
-  function personalizeWelcome() {
-    const name = (window.currentUser && window.currentUser.name) || null;
-    $("#welcomeTitle").textContent = name ? `Welcome back, ${name}` : "Welcome back";
+    // Handle Save → create via API (fallback to localStorage on failure)
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const newTxn = {
+        type: ($("#txnType")?.value || "expense").toLowerCase(),
+        date: $("#txnDate")?.value,
+        source: $("#txnSource")?.value?.trim(),
+        category: $("#txnCategory")?.value?.trim(),
+        amount: parseFloat($("#txnAmount")?.value),
+        method: $("#txnMethod")?.value?.trim(),
+        notes: $("#txnNotes")?.value?.trim(),
+      };
+
+      try {
+        await api.createRecord(newTxn);
+      } catch {
+        // Fallback to localStorage if API unavailable or user not authed
+        const stored = JSON.parse(localStorage.getItem("userTxns") || "[]");
+        stored.push(newTxn);
+        localStorage.setItem("userTxns", JSON.stringify(stored));
+      }
+
+      modal?.classList.add("hidden");
+      // Refresh the dashboard with latest data
+      await onNewData();
+      alert("Transaction added successfully!");
+      form.reset();
+    });
+  }
+
+  async function personalizeWelcome() {
+    try {
+      const me = await api.me();
+      $("#welcomeTitle").textContent = me?.name ? `Welcome back, ${me.name}` : "Welcome back";
+      // Optionally expose current user globally if other scripts rely on it:
+      window.currentUser = me;
+    } catch {
+      $("#welcomeTitle").textContent = "Welcome back";
+    }
   }
 
   async function init() {
-    // default.js already injected header/footer; this file only handles page logic.
-    wireActions();
-    personalizeWelcome();
+    await wireActions(refresh);
+    await personalizeWelcome();
+    await refresh();
+  }
 
+  async function refresh() {
     try {
-      const data = await loadData();
-
-      // 1) Compute overview from raw arrays (ignore summary totals)
+      // Try API first
+      const data = await loadFromApi();
       const computed = computeOverview(data);
       renderKpisFromComputed(computed);
-
-      // 2) Recent expenses table (keep as expenses only, per your columns)
-      renderexpenses($("#txnTbody"), data.expenses || [], computed.currency);
-
-      // 3) Chart + legend + breakdown from computed expense categories
+      renderExpenses($("#txnTbody"), data.expenses || [], computed.currency);
       const canvas = $("#categoriesChart");
       drawBarChart(canvas, computed.categories || {});
       renderLegend($("#chartLegend"), computed.categories || {});
       renderBreakdown($("#categoryList"), computed.categories || {}, computed.currency);
-    } catch (err) {
-      console.error(err);
-      const status = $("#lastUpdated");
-      if (status) status.textContent = "Could not load data.";
-      const tb = $("#txnTbody");
-      if (tb) tb.innerHTML = `<tr><td colspan="6" class="subtle">Failed to load expenses.</td></tr>`;
+    } catch (apiErr) {
+      console.warn("API unavailable, using fallback:", apiErr?.message || apiErr);
+      try {
+        const data = await loadFromFallback();
+        const computed = computeOverview(data);
+        renderKpisFromComputed(computed);
+        renderExpenses($("#txnTbody"), data.expenses || [], computed.currency);
+        const canvas = $("#categoriesChart");
+        drawBarChart(canvas, computed.categories || {});
+        renderLegend($("#chartLegend"), computed.categories || {});
+        renderBreakdown($("#categoryList"), computed.categories || {}, computed.currency);
+      } catch (err) {
+        console.error(err);
+        $("#lastUpdated").textContent = "Could not load data.";
+        $("#txnTbody").innerHTML = `<tr><td colspan="6" class="subtle">Failed to load expenses.</td></tr>`;
+      }
     }
   }
 

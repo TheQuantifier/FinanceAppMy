@@ -1,10 +1,10 @@
-// scripts/records.js
+// web/scripts/records.js
 // Handles fetching records, displaying them in tables, filtering,
 // and managing Add Expense / Add Income modals.
 
-document.addEventListener("DOMContentLoaded", () => {
-  const API_BASE = "http://localhost:4000/api";
+import { api } from "./api.js";
 
+document.addEventListener("DOMContentLoaded", () => {
   // =================== Elements ===================
   const expenseTbody = document.getElementById("recordsTbody");
   const incomeTbody = document.getElementById("recordsTbodyIncome");
@@ -29,11 +29,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // =================== Helpers ===================
   function showModal(modal) {
-    modal.classList.remove("hidden");
+    modal?.classList.remove("hidden");
   }
 
   function hideModal(modal) {
-    modal.classList.add("hidden");
+    modal?.classList.add("hidden");
   }
 
   function createRow(record) {
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <td>${record.date || "—"}</td>
       <td>${record.source || "—"}</td>
       <td>${record.category || "—"}</td>
-      <td class="num">${record.amount != null ? record.amount.toFixed(2) : "0.00"}</td>
+      <td class="num">${Number(record.amount || 0).toFixed(2)}</td>
       <td>${record.method || "—"}</td>
       <td>${record.notes || ""}</td>
     `;
@@ -55,16 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
       expenseTbody.innerHTML = `<tr><td colspan="6" class="subtle">Loading expenses…</td></tr>`;
       incomeTbody.innerHTML = `<tr><td colspan="6" class="subtle">Loading income…</td></tr>`;
 
-      const [recordsRes, receiptsRes] = await Promise.all([
-        fetch(`${API_BASE}/records`),
-        fetch(`${API_BASE}/receipts`)
+      const [records, receipts] = await Promise.all([
+        api.listRecords().catch(() => []),
+        api.listReceipts().catch(() => []),
       ]);
-
-      if (!recordsRes.ok || !receiptsRes.ok)
-        throw new Error("Failed to fetch data from backend");
-
-      const records = await recordsRes.json();
-      const receipts = await receiptsRes.json();
 
       const all = [];
 
@@ -100,6 +94,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error("Error loading records:", err);
+      if (err.message.toLowerCase().includes("not authenticated")) {
+        // Redirect to login with return URL
+        const url = new URL("./login.html", location.href);
+        url.searchParams.set("redirect", "records.html");
+        location.href = url.toString();
+        return;
+      }
+
       expenseTbody.innerHTML = `<tr><td colspan="6" class="subtle">Error loading expenses.</td></tr>`;
       incomeTbody.innerHTML = `<tr><td colspan="6" class="subtle">Error loading income.</td></tr>`;
     }
@@ -107,17 +109,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // =================== Render Tables ===================
   function renderTable(records, tbody, form, pageInfo) {
-    if (!form) return;
+    if (!form || !tbody) return;
 
-    const q = form.querySelector("input[type=search]").value.toLowerCase();
-    const category = form.querySelector("select[id^=category]").value;
-    const method = form.querySelector("select[id^=method]").value;
-    const minDate = form.querySelector("input[id^=minDate]").value;
-    const maxDate = form.querySelector("input[id^=maxDate]").value;
-    const minAmt = parseFloat(form.querySelector("input[id^=minAmt]").value) || 0;
-    const maxAmt = parseFloat(form.querySelector("input[id^=maxAmt]").value) || Infinity;
-    const sort = form.querySelector("select[id^=sort]").value;
-    const pageSize = parseInt(form.querySelector("select[id^=pageSize]").value) || 25;
+    const q = form.querySelector("input[type=search]")?.value.toLowerCase() || "";
+    const category = form.querySelector("select[id^=category]")?.value || "";
+    const method = form.querySelector("select[id^=method]")?.value || "";
+    const minDate = form.querySelector("input[id^=minDate]")?.value || "";
+    const maxDate = form.querySelector("input[id^=maxDate]")?.value || "";
+    const minAmt = parseFloat(form.querySelector("input[id^=minAmt]")?.value) || 0;
+    const maxAmt = parseFloat(form.querySelector("input[id^=maxAmt]")?.value) || Infinity;
+    const sort = form.querySelector("select[id^=sort]")?.value || "";
+    const pageSize = parseInt(form.querySelector("select[id^=pageSize]")?.value) || 25;
 
     let filtered = records.filter(r => {
       const matchQ =
@@ -173,27 +175,28 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const payload = {
       type: "expense",
-      date: document.getElementById("expenseDate").value,
-      source: document.getElementById("expenseSource").value,
-      category: document.getElementById("expenseCategory").value,
-      amount: parseFloat(document.getElementById("expenseAmount").value) || 0,
-      method: document.getElementById("expenseMethod").value,
-      notes: document.getElementById("expenseNotes").value,
+      date: document.getElementById("expenseDate")?.value,
+      source: document.getElementById("expenseSource")?.value,
+      category: document.getElementById("expenseCategory")?.value,
+      amount: parseFloat(document.getElementById("expenseAmount")?.value) || 0,
+      method: document.getElementById("expenseMethod")?.value,
+      notes: document.getElementById("expenseNotes")?.value,
       currency: "USD",
     };
   
     try {
-      const res = await fetch(`${API_BASE}/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to save expense");
+      await api.createRecord(payload);
       hideModal(addExpenseModal);
       expenseForm.reset();
-      loadRecords();
+      await loadRecords();
     } catch (err) {
-      alert("Error saving expense: " + err.message);
+      if (err.message.toLowerCase().includes("not authenticated")) {
+        const url = new URL("./login.html", location.href);
+        url.searchParams.set("redirect", "records.html");
+        location.href = url.toString();
+      } else {
+        alert("Error saving expense: " + err.message);
+      }
     }
   });
   
@@ -201,27 +204,28 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const payload = {
       type: "income",
-      date: document.getElementById("incomeDate").value,
-      source: document.getElementById("incomeSource").value,
-      category: document.getElementById("incomeCategory").value,
-      amount: parseFloat(document.getElementById("incomeAmount").value) || 0,
-      method: document.getElementById("incomeMethod").value,
-      notes: document.getElementById("incomeNotes").value,
+      date: document.getElementById("incomeDate")?.value,
+      source: document.getElementById("incomeSource")?.value,
+      category: document.getElementById("incomeCategory")?.value,
+      amount: parseFloat(document.getElementById("incomeAmount")?.value) || 0,
+      method: document.getElementById("incomeMethod")?.value,
+      notes: document.getElementById("incomeNotes")?.value,
       currency: "USD",
     };
   
     try {
-      const res = await fetch(`${API_BASE}/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to save income");
+      await api.createRecord(payload);
       hideModal(addIncomeModal);
       incomeForm.reset();
-      loadRecords();
+      await loadRecords();
     } catch (err) {
-      alert("Error saving income: " + err.message);
+      if (err.message.toLowerCase().includes("not authenticated")) {
+        const url = new URL("./login.html", location.href);
+        url.searchParams.set("redirect", "records.html");
+        location.href = url.toString();
+      } else {
+        alert("Error saving income: " + err.message);
+      }
     }
   });
   
@@ -236,11 +240,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("btnClear")?.addEventListener("click", () => {
-    filtersForm.reset();
+    filtersForm?.reset();
     loadRecords();
   });
   document.getElementById("btnClearIncome")?.addEventListener("click", () => {
-    filtersFormIncome.reset();
+    filtersFormIncome?.reset();
     loadRecords();
   });
 
