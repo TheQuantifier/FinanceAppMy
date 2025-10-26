@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/.venv
+**/.DS_Store
+**/tmp_uploads
+**/uploads
+web/node_modules
+web/.cache
+*.log
+.env

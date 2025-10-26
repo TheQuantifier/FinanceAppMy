@@ -1,33 +1,51 @@
 # =====================================================
-# FinanceAppMy – Render-ready full image (Node + Python + Tesseract)
+# FinanceApp – Render-ready image (Node + Python + Tesseract)
 # =====================================================
 FROM node:20-bullseye
 
-# --- Install Python + Tesseract OCR dependencies ---
-RUN apt-get update && apt-get install -y \
-    python3 python3-pip tesseract-ocr \
+# --- System deps: Python + Tesseract (no extras) ---
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-pip tesseract-ocr \
  && rm -rf /var/lib/apt/lists/*
 
-# --- Set working directory ---
+# --- Workdir ---
 WORKDIR /opt/app
 
-# --- Copy and install Node dependencies for API ---
-COPY api/package*.json api/
-RUN cd api && npm install --omit=dev
+# --- Install Node deps for API using lockfile (prod only) ---
+COPY api/package*.json ./api/
+RUN cd api && npm ci --omit=dev
 
-# --- Copy the rest of the repo (API + worker + web) ---
-COPY . .
+# --- Copy only the source you need at runtime ---
+# API (server code)
+COPY api ./api
+# Worker (OCR script)
+COPY worker ./worker
+# If the web/ folder is served separately, omit this to reduce image size.
+# COPY web ./web
 
-# --- Install Python libraries for OCR ---
-RUN python3 -m pip install --no-cache-dir pymupdf pillow pytesseract
+# --- Python libs for OCR ---
+RUN python3 -m pip install --no-cache-dir \
+      pymupdf pillow pytesseract
 
-# --- Environment defaults (can override in Render) ---
+# --- Prepare runtime dirs & permissions ---
+# Your app uses tmp_uploads by default; create it in-image so it exists on first boot.
+RUN mkdir -p /opt/app/api/tmp_uploads \
+ && chown -R node:node /opt/app
+
+# --- Environment (override in Render as needed) ---
 ENV NODE_ENV=production \
     OCR_ENABLED=true \
     PYTHON_BIN=python3 \
-    UPLOAD_DIR=/opt/app/api/uploads \
+    PYTHONIOENCODING=UTF-8 \
+    UPLOAD_DIR=/opt/app/api/tmp_uploads \
     PORT=4000
 
-# --- Final working directory and startup command ---
+# Optional: document port
+EXPOSE 4000
+
+# --- Drop privileges ---
+USER node
+
+# --- Start API ---
 WORKDIR /opt/app/api
 CMD ["node", "src/server.js"]
