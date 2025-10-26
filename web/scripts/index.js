@@ -1,4 +1,4 @@
-// web/scripts/login.js
+// web/scripts/index.js
 import { api } from "./api.js";
 
 document.addEventListener("DOMContentLoaded", () => {
