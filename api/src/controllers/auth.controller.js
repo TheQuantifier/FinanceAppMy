@@ -4,13 +4,16 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { jwtSecret } = require("../config/env");
 
-/** Helper to set auth cookie consistently */
+const isProd = process.env.NODE_ENV === "production";
+
+/** Helper to set auth cookie consistently (must match on clearCookie) */
 function setAuthCookie(res, token) {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // requires HTTPS in prod
-    sameSite: "lax",
-    maxAge: 2 * 60 * 60 * 1000, // 2 hours
+    secure: isProd,                     // required for cross-site in prod (HTTPS)
+    sameSite: isProd ? "none" : "lax",  // cross-site requires "none"
+    path: "/",                          // send cookie on all routes
+    maxAge: 2 * 60 * 60 * 1000,         // 2 hours
   });
 }
 
@@ -74,7 +77,6 @@ exports.login = async (req, res, next) => {
 
 exports.me = async (req, res, next) => {
   try {
-    // req.user is set by requireAuth middleware
     const me = await User.findById(req.user.id).select("-passwordHash");
     if (!me) {
       return res.status(404).json({ error: "User not found" });
@@ -86,11 +88,12 @@ exports.me = async (req, res, next) => {
 };
 
 exports.logout = async (_req, res, _next) => {
-  // Clear auth cookie
+  // Options MUST match those used when setting the cookie
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
   });
   return res.json({ message: "Logged out" });
 };
