@@ -1,4 +1,6 @@
 // api/src/lib/multer.js
+// Configures Multer for secure file uploads, ensuring the upload directory exists and allowing only PDF/PNG/JPG files.
+// Provides an upload instance with a 50 MB limit and timestamped, sanitized filenames.
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");

@@ -1,4 +1,6 @@
 // api/src/routes/auth.routes.js
+// Defines authentication-related API routes for registration, login, logout, and fetching the current user.
+// Connects each route to its controller logic and applies JWT-based protection for authenticated endpoints.
 const { Router } = require("express");
 const ctrl = require("../controllers/auth.controller");
 const { requireAuth } = require("../middlewares/auth");

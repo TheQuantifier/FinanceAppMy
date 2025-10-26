@@ -1,4 +1,6 @@
 // api/src/models/Record.js
+// Defines the MongoDB schema for financial records, storing income and expense details with timestamps and indexes.
+// Ensures consistent JSON formatting for API responses and supports filtering by date, type, and method.
 const mongoose = require("mongoose");
 
 const RecordSchema = new mongoose.Schema(

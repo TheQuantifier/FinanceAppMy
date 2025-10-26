@@ -1,4 +1,6 @@
 // api/src/routes/index.js
+// Central router that combines all route modules (auth, records, receipts) under their respective paths.
+// Each route is mounted below the /api prefix defined in the main Express app.
 const { Router } = require("express");
 const authRoutes = require("./auth.routes");
 const recordsRoutes = require("./records.routes");

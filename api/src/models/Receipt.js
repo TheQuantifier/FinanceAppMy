@@ -1,16 +1,22 @@
 // api/src/models/Receipt.js
+// Defines the MongoDB schema for uploaded receipts, including file metadata, OCR text, and parsed financial details.
+// Adds indexes for efficient querying and custom JSON formatting for API responses. Tracks GridFS file IDs.
+
 const mongoose = require("mongoose");
+const { Schema, Types } = mongoose;
 
 /**
  * Receipt Schema
  * Stores uploaded receipt metadata, parsed OCR fields, and derived finance data.
  */
-const ReceiptSchema = new mongoose.Schema(
+const ReceiptSchema = new Schema(
   {
-    // ---- File Metadata ----
+    // ---- File Metadata (GridFS) ----
+    file_id: { type: Types.ObjectId },                 // GridFS _id
+    bucket: { type: String, default: "uploads" },      // GridFS bucket
     original_filename: { type: String },
-    stored_filename: { type: String },
-    path: { type: String },
+    stored_filename: { type: String },                 // GridFS filename
+    path: { type: String },                            // (legacy; may be null when using GridFS)
     mimetype: { type: String },
     size_bytes: { type: Number },
     uploaded_at: { type: Date, default: Date.now },
@@ -44,6 +50,7 @@ ReceiptSchema.set("toJSON", {
   versionKey: false,
   transform: (_doc, ret) => {
     ret._id = String(ret._id);
+    if (ret.file_id) ret.file_id = String(ret.file_id);
     return ret;
   },
 });

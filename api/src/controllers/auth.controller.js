@@ -1,4 +1,6 @@
 // api/src/controllers/auth.controller.js
+// Handles user authentication: registration, login, session retrieval, and logout.
+// Uses bcrypt for password hashing, JWT for authentication tokens, and cookies for session storage.
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");

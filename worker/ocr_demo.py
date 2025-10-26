@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Extracts text from PDFs/images with PyMuPDF + Tesseract, lightly parses fields (date/amount/etc.), and prints JSON for Node integration.
 """
 worker/ocr_demo.py
 Extracts text from PDFs or images using PyMuPDF + pytesseract.

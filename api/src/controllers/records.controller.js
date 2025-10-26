@@ -1,4 +1,6 @@
 // api/src/controllers/records.controller.js
+// Manages financial record data: listing and creating income/expense entries.
+// Supports filtering by category, method, or type, and stores records in MongoDB with validation.
 const Record = require("../models/Record");
 
 /**

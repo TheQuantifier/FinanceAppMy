@@ -1,4 +1,7 @@
 // api/src/middlewares/auth.js
+// Middleware for JWT-based authentication.
+// Validates tokens from cookies or Authorization headers and attaches user data to requests.
+// Includes both strict (requireAuth) and optional (optionalAuth) authentication modes.
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../config/env");
 

@@ -1,4 +1,6 @@
 // api/src/models/User.js
+// Defines the MongoDB schema for user accounts, including name, email, and hashed password.
+// Automatically removes sensitive password data from JSON responses for security.
 const mongoose = require("mongoose");
 
 /**
