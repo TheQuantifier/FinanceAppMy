@@ -4,6 +4,7 @@
 .env
 .env.local
 .env.*.local
+cookies.txt
 
 # =========================
 # 📦 Node Dependencies
@@ -30,11 +31,18 @@ logs/
 # =========================
 # 📂 Uploads / Storage
 # =========================
+# Local runtime uploads (do not commit)
+tmp_uploads/
 uploads/
 storage/
 public/uploads/
 *.bak
 *.tmp
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.csv
 
 # =========================
 # 🧠 Python OCR Worker
@@ -66,3 +74,10 @@ Thumbs.db
 *.test.js
 *.spec.js
 coverage/
+
+# =========================
+# 🧭 Deployment Artifacts
+# =========================
+.github/
+web/dist/
+web/.cache/
