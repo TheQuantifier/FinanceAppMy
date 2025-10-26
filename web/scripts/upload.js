@@ -1,19 +1,15 @@
 /* ===============================================
    Finance App — upload.js (ES module)
-   Drag & drop / file picker → POST to backend /upload
+   Drag & drop / file picker → POST to backend /api/receipts
    Lists & deletes via /api/receipts using api.js helpers.
    =============================================== */
 
 import { api, API_BASE as API_API_BASE } from "./api.js";
 
 (function () {
-  // ---- Endpoints ----
-  // api.js exports API base ending with /api (e.g., http://localhost:4000/api)
-  // /upload lives at the ROOT, not under /api.
-  const urlParamRoot = new URLSearchParams(location.search).get("api"); // allow override
-  const ROOT_BASE = urlParamRoot
-    ? urlParamRoot.replace(/\/$/, "")
-    : new URL(API_API_BASE).origin;
+  // ---- Base constants ----
+  // API_API_BASE already ends with /api (e.g. https://financeappmy.onrender.com/api)
+  const ROOT_BASE = API_API_BASE.replace(/\/api$/, "");
 
   const ACCEPTED = ["application/pdf", "image/png", "image/jpeg"];
   const MAX_MB = 50;
@@ -255,22 +251,21 @@ import { api, API_BASE as API_API_BASE } from "./api.js";
       setStatus(`Uploading ${file.name}…`);
 
       try {
-        // NOTE: /upload is at ROOT_BASE (e.g., http://localhost:4000/upload)
-        await fetchJSON(`${ROOT_BASE}/upload`, { method: "POST", body: fd });
+        // ✅ Corrected endpoint: /api/receipts
+        await fetchJSON(`${API_API_BASE}/receipts`, { method: "POST", body: fd });
         setStatus(`Uploaded: ${file.name}`);
         queue.shift();
         renderQueue();
-        await refreshRecent(); // update table immediately
+        await refreshRecent();
       } catch (err) {
-        // If unauthorized (shouldn't be needed for /upload), consider redirect
-        if ((err.status === 401 || err.status === 403)) {
+        if (err.status === 401 || err.status === 403) {
           const url = new URL("./login.html", location.href);
           url.searchParams.set("redirect", "upload.html");
           location.href = url.toString();
           return;
         }
         setStatus(`Upload failed: ${err.message}`, true);
-        break; // stop queue on error
+        break;
       } finally {
         dropzone?.removeAttribute("aria-busy");
       }
